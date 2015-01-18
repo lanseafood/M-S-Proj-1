@@ -29,12 +29,12 @@ void create_sim( double simTime );
  * @params D		: Direction of Vehicle
  * @return			: Pointer to Event
  **/
-Event init_event( double timestamp, TypeOfEvent T, Direction D );
+Event init_event( double timestamp, TypeOfEvent ET, TypeOfObject OT );
 
 /**
  * Calculates random number
  *
- * @return  : Random in [0,1)
+ * @return: Random number in [0,1)
  **/
 double urand();
 
@@ -45,7 +45,7 @@ double urand();
  * @params D: Direction can be used to specify different inter arrival times for north/south direction
  * @return: Random number r = simulation time + x, where x is exp. distr.
  **/
-double randexp( Direction D );
+double randexp();
 
 /**
  * Callback function for arrivalEvents
@@ -76,11 +76,9 @@ void crossing( void* P );
 void departure( void* P );
 
 /**
- * Switches the bridge state after a group has finished crossing
- * If no Vehicles are waiting, bridgeState will be switched to empty
  *
  **/
-void switch_bridge_state();
+void switch_traffic_signal( void *P );
 
 #endif
 

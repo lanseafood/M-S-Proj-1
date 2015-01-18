@@ -15,8 +15,10 @@ static int idCounter = 0;
 
 struct VehicleType {
 	int id;
-	Direction direction;
+	int origin;
+	int destination;
 	double arrivalTime;
+	double waitTime;
 };
 
 Vehicle create_vehicle() {
@@ -25,6 +27,10 @@ Vehicle create_vehicle() {
 		fprintf(stderr, "ERROR from create_event(): malloc() failed\n"); exit(1);
 	}
 	V->id = ++idCounter;
+	V->origin = 0;
+	V->destination = 0;
+	V->arrivalTime = 0.0;
+	V->waitTime = 0.0;
 	return V;
 }
 
@@ -36,16 +42,22 @@ int get_id( Vehicle V ) {
 	return V->id;
 }
 
-int set_direction( Vehicle V, Direction D ) {
-	if( V == NULL				 ) return -1;
-	if( D != NORTH && D != SOUTH ) return -1;
-	V->direction = D;
+int set_origin( Vehicle V, int origin ) {
+	V->origin = origin;
 	return 0;
 }
 
-Direction get_direction( Vehicle V ) {
-	if( V == NULL ) return -1;
-	return V->direction;
+int get_origin( Vehicle V ) {
+	return V->origin;
+}
+
+int set_destination( Vehicle V, int destination ) {
+	V->destination = destination;
+	return 0;
+}
+
+int get_destination( Vehicle V ) {
+	return V->destination;
 }
 
 int set_arrival_time( Vehicle V, double arrivalTime ) {
@@ -58,6 +70,15 @@ int set_arrival_time( Vehicle V, double arrivalTime ) {
 double get_arrival_time( Vehicle V ) {
 	if( V == NULL ) return -1;
 	return V->arrivalTime;
+}
+
+int add_wait_time( Vehicle V, double waitTime ) {
+	V->waitTime += waitTime;
+	return 0;
+}
+
+double get_wait_time( Vehicle V ) {
+	return V->waitTime;
 }
 
 /* eof */

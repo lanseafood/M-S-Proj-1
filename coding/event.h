@@ -9,6 +9,7 @@
 #ifndef traffic_event_h
 #define traffic_event_h
 
+#include "intersection.h"
 #include "vehicle.h"
 
 // Declare abstract type of Event
@@ -16,10 +17,19 @@ typedef struct EventType *Event;
 typedef void	 (*fptr)(void *);
 
 typedef enum {
+	VEHICLE,
+	INTERSECTION,
+	SECTION
+} TypeOfObject;
+
+typedef enum {
 	ARRIVAL,
 	ENTERING,
 	CROSSING,
 	DEPARTURE
+	// Global Arrival
+	// Global Departure
+	// 
 } TypeOfEvent;
 
 /**
@@ -54,13 +64,47 @@ int set_timestamp( Event E, double timestamp );
 double get_timestamp( void *P );
 
 /**
- * Set type of Event
+ * Set Object of Event
  *
  * @params E: Pointer to Event
- * @params T: Type of Event
- * @return: 0 on success, -1 otherwise
+ * @params V: Pointer to Object
+ * @return  : 0 on success, NULL otherwise
  **/
-int set_type( Event E, TypeOfEvent T );
+int set_object( Event E, void *O );
+
+/**
+ * Get Object of Event
+ *
+ * @params E: Pointer to Event
+ * @return  : Pointer to Object of Event on success, -1 otherwise
+ **/
+Vehicle get_object( Event E );
+
+/**
+ * Set type of Object
+ *
+ * @params E : Pointer to Event
+ * @params OT: Type of Object
+ * @return   : 0 on success, -1 otherwise
+ **/
+int set_object_type( Event E, TypeOfObject OT );
+
+/**
+ * Get type of Object
+ *
+ * @params E: Pointer to Event
+ * @return  : Type of Object on success, -1 otherwise
+ **/
+TypeOfEvent get_object_type( Event E );
+
+/**
+ * Set type of Event
+ *
+ * @params E : Pointer to Event
+ * @params ET: Type of Event
+ * @return   : 0 on success, -1 otherwise
+ **/
+int set_event_type( Event E, TypeOfEvent ET );
 
 /**
  * Get type of Event
@@ -68,24 +112,7 @@ int set_type( Event E, TypeOfEvent T );
  * @params E: Pointer to Event
  * @return  : Type of Event on success, -1 otherwise
  **/
-TypeOfEvent get_type( Event E );
-
-/**
- * Set Vehicle of Event
- *
- * @params E: Pointer to Event
- * @params V: Pointer to Vehicle
- * @return: 0 on success, NULL otherwise
-**/
-int set_vehicle( Event E, Vehicle V );
-
-/**
- * Get Vehicle of Event
- *
- * @params E: Pointer to Event
- * @return  : Pointer to Vehicle of Event on success, -1 otherwise
- **/
-Vehicle get_vehicle( Event E );
+TypeOfEvent get_event_type( Event E );
 
 /**
  * Set Callback function of Event

@@ -12,12 +12,6 @@
 // Declare abstract type of Vehicle
 typedef struct VehicleType *Vehicle;
 
-typedef enum {
-	NORTH,
-	SOUTH,
-	EMPTY
-} Direction;
-
 /**
  * Creates a new Event
  *
@@ -34,19 +28,34 @@ Vehicle create_vehicle();
 int get_id( Vehicle V );
 
 /**
- * Sets direction of Vehicle
+ * Sets origin zone of Vehicle
  *
  * @return: 0 on success, -1 otherwise
  **/
-int set_direction( Vehicle V, Direction D );
+int set_origin( Vehicle V, int origin );
 
 /**
- * Gets direction of Vehicle
+ * Gets origin zone of Vehicle
  *
  * @params: Pointer to Vehicle
  * @return: Direction of Vehicle on success, -1 otherwise
  **/
-Direction get_direction( Vehicle V );
+int get_origin( Vehicle V );
+
+/**
+ * Sets destination zone of Vehicle
+ *
+ * @return: 0 on success, -1 otherwise
+ **/
+int set_destination( Vehicle V, int destination );
+
+/**
+ * Gets destination zone of Vehicle
+ *
+ * @params: Pointer to Vehicle
+ * @return: Direction of Vehicle on success, -1 otherwise
+ **/
+int get_destination( Vehicle V );
 
 /**
  * Sets arrival time of Vehicle
@@ -62,6 +71,22 @@ int set_arrival_time( Vehicle V, double arrivalTime );
  * @return: Arrival time of Vehicle on success, -1 otherwise
  **/
 double get_arrival_time( Vehicle V );
+
+/**
+ * Increment wait time of Vehicle
+ *
+ * @return: 0 on success, -1 otherwise
+ **/
+int add_wait_time( Vehicle V, double waitTime );
+
+/**
+ * Gets wait time of Vehicle
+ *
+ * @params: Pointer to Vehicle
+ * @return: Arrival time of Vehicle on success, -1 otherwise
+ **/
+double get_wait_time( Vehicle V );
+
 
 #endif
 

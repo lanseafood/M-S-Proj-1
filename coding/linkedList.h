@@ -37,6 +37,15 @@ void free_list( LinkedList L );
 int add_to_list( LinkedList L, ptr P );
 
 /**
+ * Returns first element from list without removing it from the list
+ *
+ * @params L: Pointer to LinkedList
+ * @return  : Pointer to removed element on success, NULL otherwise
+ **/
+ptr peek_from_list( LinkedList L );
+
+
+/**
  * Removes first element from list
  *
  * @params L: Pointer to LinkedList

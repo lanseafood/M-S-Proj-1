@@ -13,8 +13,9 @@
 
 struct EventType {
 	double timestamp;
-	Vehicle vehicle;
-	TypeOfEvent type;
+	void *object;
+	TypeOfObject objectType;
+	TypeOfEvent eventType;
 	fptr callback;
 };
 
@@ -23,7 +24,7 @@ Event create_event() {
 	if( E == NULL ) {
 		fprintf(stderr, "ERROR from create_event(): malloc() failed\n"); exit(1);
 	}
-	E->vehicle = NULL;
+	E->object = NULL;
 	E->callback = NULL;
 	return E;
 }
@@ -52,29 +53,40 @@ double get_timestamp( void* P ) {
 	return E->timestamp;
 }
 
-int set_type( Event E, TypeOfEvent T ) {
-	if( E == NULL ) return -1;
-	if( T != ARRIVAL && T != ENTERING && T != CROSSING && T != DEPARTURE ) return -1;
-	E->type = T;
-	return 0;
-}
-
-TypeOfEvent get_type( Event E ) {
-	if( E == NULL ) return -1;
-	return E->type;
-}
-
-int set_vehicle( Event E, Vehicle V ) {
+int set_object( Event E, void *O ) {
 	if( E == NULL ) return -1;
 	if( V == NULL ) return -1;
 	E->vehicle = V;
 	return 0;
-
 }
 
-Vehicle get_vehicle( Event E ) {
+Vehicle get_object( Event E ) {
 	if( E == NULL ) return NULL;
-	return E->vehicle;
+	return E->object;
+}
+
+int set_object_type( Event E, TypeOfObject OT ) {
+	if( E == NULL ) return -1;
+	if( OT != VEHICLE && OT != INTERSECTION && OT != SECTION ) return -1;
+	E->objectType = OT;
+	return 0;
+}
+
+TypeOfEvent get_object_type( Event E ) {
+	if( E == NULL ) return -1;
+	return E->objectType;
+}
+
+int set_event_type( Event E, TypeOfEvent ET ) {
+	if( E == NULL ) return -1;
+	if( ET != ARRIVAL && ET != ENTERING && ET != CROSSING && ET != DEPARTURE ) return -1;
+	E->eventType = ET;
+	return 0;
+}
+
+TypeOfEvent get_event_type( Event E ) {
+	if( E == NULL ) return -1;
+	return E->eventType;
 }
 
 int set_callback( Event E, fptr cb ) {

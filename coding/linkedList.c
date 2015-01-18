@@ -59,6 +59,11 @@ int add_to_list( LinkedList L, ptr P ) {
     return 0;
 }
 
+ptr peek_from_list( LinkedList L ) {
+	if( L == NULL ) { fprintf(stderr,"Warning from LL peek_from_list(): L is NULL\n"); return NULL; }
+	return L->head;
+}
+
 ptr remove_from_list( LinkedList L ) {
 	if( L == NULL ) { fprintf(stderr,"Warning from LL remove_from_list(): L is NULL\n"); return NULL; }
 	if( L->counter < 1 ) { fprintf(stderr,"Warning from LL remove_from_list(): L is empty\n"); return NULL; }
