@@ -12,8 +12,6 @@
 
 typedef struct IntersectionType *Intersection;
 
-typedef struct SignalType *Signal;
-
 typedef enum {
 	GREEN,
 	YELLOW,
@@ -21,20 +19,27 @@ typedef enum {
 	INV
 } Color;
 
+typedef struct {
+	int zoneID;
+	double *times;
+	Color init;
+	Color light;
+} Signal;
+
 
 Intersection create_intersection();
 
 int get_inter_zoneID(Intersection I);
 
-int get_signal_zoneID(Signal S);
+int get_signal_zoneID(Signal *S);
 
-int set_init(Signal S, Color initial_color);
+int set_init(Signal *S, Color initial_color);
 
-Color get_init(Signal S);
+Color get_init(Signal *S);
 
-int set_light(Signal S, Color light);
+int set_light(Signal *S, Color light);
 
-Color get_light(Signal S);
+Color get_light(Signal *S);
 
 double get_ns_len(Intersection I);
 

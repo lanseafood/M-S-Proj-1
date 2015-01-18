@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "section.h"
+
 struct SectionType {
 	int zoneID;
 	double len; 
@@ -19,11 +21,11 @@ struct SectionType {
 
 
 
-Section create_section(int zoneID)
+Section create_section(int zoneID) {
 	Section S = (Section) malloc(sizeof(struct SectionType));
 	S->zoneID = zoneID;
 
-	double len;
+	double len=0;
 
 	if (zoneID==1 || zoneID==6) {
 		len = 0;
