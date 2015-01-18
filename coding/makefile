@@ -8,8 +8,8 @@ CC       = gcc
 CFLAGS   = -std=c99 -pedantic -Wall -Werror
 OPTFLAGS =
 LIBS     = -lm
-SOURCES  = event.c vehicle.c intersection.c priorityQueue.c linkedList.c simEngine.c simApplication.c main.c
-HEADERS  = event.h vehicle.h intersection.h priorityQueue.h linkedList.h simEngine.h simApplication.h
+SOURCES  = event.c vehicle.c intersection.c section.c priorityQueue.c linkedList.c simEngine.c simApplication.c main.c
+HEADERS  = event.h vehicle.h intersection.h section.h priorityQueue.h linkedList.h simEngine.h simApplication.h
 OBJECTS  = $(SOURCES:.c=.o)
 
 .PHONY: clean
