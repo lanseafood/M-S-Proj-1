@@ -31,9 +31,9 @@ Event create_event() {
 
 void free_event( Event E ) {
 	if( E == NULL ) return;
-	if( E->vehicle != NULL ) {
-		free(E->vehicle);
-		E->vehicle = NULL;
+	if( E->object != NULL ) {
+		free(E->object);
+		E->object = NULL;
 	}
 	E->callback = NULL;
 	free(E);
@@ -53,33 +53,31 @@ double get_timestamp( void* P ) {
 	return E->timestamp;
 }
 
-int set_object( Event E, void *O ) {
+int set_object( Event E, void *object ) {
 	if( E == NULL ) return -1;
-	if( V == NULL ) return -1;
-	E->vehicle = V;
+	if( object == NULL ) return -1;
+	E->object = object;
 	return 0;
 }
 
-Vehicle get_object( Event E ) {
+void* get_object( Event E ) {
 	if( E == NULL ) return NULL;
 	return E->object;
 }
 
 int set_object_type( Event E, TypeOfObject OT ) {
 	if( E == NULL ) return -1;
-	if( OT != VEHICLE && OT != INTERSECTION && OT != SECTION ) return -1;
 	E->objectType = OT;
 	return 0;
 }
 
-TypeOfEvent get_object_type( Event E ) {
+TypeOfObject get_object_type( Event E ) {
 	if( E == NULL ) return -1;
 	return E->objectType;
 }
 
 int set_event_type( Event E, TypeOfEvent ET ) {
 	if( E == NULL ) return -1;
-	if( ET != ARRIVAL && ET != ENTERING && ET != CROSSING && ET != DEPARTURE ) return -1;
 	E->eventType = ET;
 	return 0;
 }

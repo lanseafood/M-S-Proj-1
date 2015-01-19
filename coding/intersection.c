@@ -1,5 +1,5 @@
 //
-//  vehicle.c
+//  intersection.c
 //  traffic
 //
 //  Authors: Mingyue Ma, Eisha Nathan, Stefan Henneking
@@ -162,3 +162,5 @@ int add_car(Intersection I) {
 int get_num_cars(Intersection I) {
 	return I->num_cars;
 }
+
+/* eof */

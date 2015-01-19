@@ -14,7 +14,7 @@
 
 // Declare abstract type of Event
 typedef struct EventType *Event;
-typedef void	 (*fptr)(void *);
+typedef void (*fptr)(void *);
 
 typedef enum {
 	VEHICLE,
@@ -23,13 +23,20 @@ typedef enum {
 } TypeOfObject;
 
 typedef enum {
-	ARRIVAL,
-	ENTERING,
-	CROSSING,
-	DEPARTURE
-	// Global Arrival
-	// Global Departure
-	// 
+	// Global events
+	GLOBAL_ARRIVAL, GLOBAL_DEPARTURE,
+	// Intersection signal events
+	IS_1_SIGNAL, IS_2_SIGNAL, IS_3_SIGNAL, IS_4_SIGNAL, IS_5_SIGNAL,
+	// Intersection vehicle events
+	IS_1_N_ARRIVAL, IS_1_N_ENTERING, IS_1_N_CROSSING, IS_1_N_DEPARTURE,
+	IS_1_E_ARRIVAL, IS_1_E_ENTERING, IS_1_E_CROSSING, IS_1_E_DEPARTURE,
+	IS_1_S_ARRIVAL, IS_1_S_ENTERING, IS_1_S_CROSSING, IS_1_S_DEPARTURE,
+	IS_1_W_ARRIVAL, IS_1_W_ENTERING, IS_1_W_CROSSING, IS_1_W_DEPARTURE,
+	// Section congestion events
+	S_2_N_CLEAR, S_2_S_CLEAR,
+	S_3_N_CLEAR, S_3_S_CLEAR,
+	S_4_N_CLEAR, S_4_S_CLEAR,
+	S_5_N_CLEAR, S_5_S_CLEAR
 } TypeOfEvent;
 
 /**
@@ -68,9 +75,9 @@ double get_timestamp( void *P );
  *
  * @params E: Pointer to Event
  * @params V: Pointer to Object
- * @return  : 0 on success, NULL otherwise
+ * @return  : 0 on success, -1 otherwise
  **/
-int set_object( Event E, void *O );
+int set_object( Event E, void *object );
 
 /**
  * Get Object of Event
@@ -78,7 +85,7 @@ int set_object( Event E, void *O );
  * @params E: Pointer to Event
  * @return  : Pointer to Object of Event on success, -1 otherwise
  **/
-Vehicle get_object( Event E );
+void* get_object( Event E );
 
 /**
  * Set type of Object
@@ -95,7 +102,7 @@ int set_object_type( Event E, TypeOfObject OT );
  * @params E: Pointer to Event
  * @return  : Type of Object on success, -1 otherwise
  **/
-TypeOfEvent get_object_type( Event E );
+TypeOfObject get_object_type( Event E );
 
 /**
  * Set type of Event
@@ -132,7 +139,7 @@ int set_callback( Event E, fptr cb );
 fptr get_callback( void* P );
 
 /**
- * Provides comparison of two Events for PriorityQueue
+ * Provides timestamp comparison of two Events for PriorityQueue
  *
  * @params P1: Pointer to Event
  * @params P2: Pointer to Event

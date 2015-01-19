@@ -51,7 +51,7 @@ ptr peek_from_list( LinkedList L );
  * @params L: Pointer to LinkedList
  * @return  : Pointer to removed element on success, NULL otherwise
  **/
-ptr remove_from_list( LinkedList L );
+ptr poll_from_list( LinkedList L );
 
 /**
  * Reads out the element counter of a list

@@ -17,7 +17,7 @@ typedef uint_fast32_t UINT32;
 
 /**
  *	Implementation of struct PriorityQueueType for PriorityQueue
- *	-> implemented as binary heap (not visible to user)
+ *	-> implemented as a binary heap
  **/
 struct PriorityQueueType {
 	queueElement *elements;

@@ -16,6 +16,10 @@ struct LinkedListElementType {
 	LinkedListElement next;
 };
 
+/**
+ *	Implementation of struct PriorityQueueType for PriorityQueue
+ *	-> implemented as a binary heap
+ **/
 struct LinkedListType {
 	int counter;
 	LinkedListElement head;
@@ -64,7 +68,7 @@ ptr peek_from_list( LinkedList L ) {
 	return L->head;
 }
 
-ptr remove_from_list( LinkedList L ) {
+ptr poll_from_list( LinkedList L ) {
 	if( L == NULL ) { fprintf(stderr,"Warning from LL remove_from_list(): L is NULL\n"); return NULL; }
 	if( L->counter < 1 ) { fprintf(stderr,"Warning from LL remove_from_list(): L is empty\n"); return NULL; }
 	ptr P = L->head->element;

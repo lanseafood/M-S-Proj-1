@@ -16,7 +16,7 @@ static PriorityQueue eventQueue;
 
 void set_up_sim() {
 	eventQueue = create_priority_queue();
-	simTime = 0;
+	simTime = 0.0;
 }
 
 int schedule_event( queueElement E ) {
@@ -30,13 +30,19 @@ void run_sim( double simEnd ) {
 	cbptr cb = NULL;
 	
 	while( (simTime < simEnd) && !(is_empty(eventQueue)) ) {
+		
 		// Get next Event from Queue
 		nextElement = poll( eventQueue );
 		if( nextElement == NULL ) { fprintf(stderr,"run_sim(), nextElement is NULL\n"); exit(1); }
+		
 		// Update simulation time
+		if( get_timestamp(nextElement) < simTime ) {
+			fprintf(stderr,"run_sim(), event timestamp < simTime\n"); exit(1);
+		}
 		if( get_timestamp(nextElement) < simEnd ) simTime = get_timestamp(nextElement);
 		else break;
-		// Call callback function of Event
+		
+		// Call event handler
 		cb = get_callback( nextElement );
 		cb( nextElement );
 	}

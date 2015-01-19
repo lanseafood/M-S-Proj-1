@@ -1,5 +1,5 @@
 //
-//  vehicle.c
+//  section.c
 //  traffic
 //
 //  Authors: Mingyue Ma, Eisha Nathan, Stefan Henneking
@@ -19,8 +19,6 @@ struct SectionType {
 	int s_cars; //num cars south
 };
 
-
-
 Section create_section(int zoneID) {
 	Section S = (Section) malloc(sizeof(struct SectionType));
 	S->zoneID = zoneID;
@@ -30,13 +28,13 @@ Section create_section(int zoneID) {
 	if (zoneID==1 || zoneID==6) {
 		len = 0;
 	} else if (zoneID==2) {
-		len = 417.97;	
+		len = 417.97;
 	} else if (zoneID==3) {
-		len = 412.17;	
+		len = 412.17;
 	} else if (zoneID==4) {
-		len = 351.51;	
+		len = 351.51;
 	} else if (zoneID==5) {
-		len = 344.43;	
+		len = 344.43;
 	}
 
 	S->n_cars = 0;
@@ -71,3 +69,5 @@ int get_north_cars(Section S){
 int get_south_cars(Section S){
 	return S->s_cars;
 }
+
+/* eof */

@@ -1,5 +1,5 @@
 //
-//  intersection.h
+//  section.h
 //  traffic
 //
 //  Authors: Mingyue Ma, Eisha Nathan, Stefan Henneking

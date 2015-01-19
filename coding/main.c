@@ -15,22 +15,29 @@
 int main(int argc, char **argv) {
     
     // Check input arguments
-    if( argc != 1 ) {
-        fprintf(stderr,"\nNo arguments allowed! Usage: %s\n\n", argv[0]);
+    if( argc > 2 ) {
+        fprintf(stderr,"\nUsage: %s [seed]\n\n", argv[0]);
         return -1;
     }
+	
 	// Seed value for random number generator
-	struct timeval t1;
-    gettimeofday(&t1, NULL);
-    srand((unsigned int)(t1.tv_usec * t1.tv_sec));
+	int seed = 0;
+	if( argc == 2 ) {
+		seed = atoi(argv[1]);
+	} else {
+		struct timeval t1;
+		gettimeofday(&t1, NULL);
+		seed = (int)(t1.tv_usec * t1.tv_sec);
+	}
+	srand(seed);
 	
 	// Overall simulation time in seconds
-	double hours   = 4;
-	double minutes = 0;
+	double hours   = 0;
+	double minutes = 5;
 	double seconds = 0;
 	double simEnd  = hours*3600 + minutes*60 + seconds;
 	
-	// Simulate one lane bridge
+	// Simulate road network
 	create_sim( simEnd );
 	
     return 0;
