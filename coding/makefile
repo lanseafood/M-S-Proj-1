@@ -5,7 +5,7 @@
 # CSE 6730: Road Traffic Simulation
 
 CC       = gcc
-CFLAGS   = -std=c99 #-Wall #-pedantic #-Werror
+CFLAGS   = -std=c99 -pedantic #-Wall #-Werror
 OPTFLAGS =
 LIBS     = -lm
 SOURCES  = event.c vehicle.c intersection.c section.c priorityQueue.c linkedList.c simEngine.c simApplication.c main.c

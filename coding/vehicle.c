@@ -17,8 +17,12 @@ struct VehicleType {
 	int id;
 	int origin;
 	int destination;
+	int laneID;
+	double velocity;
 	double arrivalTime;
 	double waitTime;
+	double waitTimeBuf;
+	double tempDistance;
 };
 
 Vehicle create_vehicle() {
@@ -29,8 +33,12 @@ Vehicle create_vehicle() {
 	V->id = ++idCounter;
 	V->origin = 0;
 	V->destination = 0;
+	V->laneID = -1;
+	V->velocity = 0.0;
 	V->arrivalTime = 0.0;
 	V->waitTime = 0.0;
+	V->waitTimeBuf = 0.0;
+	V->tempDistance = 0.0;
 	return V;
 }
 
@@ -60,6 +68,24 @@ int get_destination( Vehicle V ) {
 	return V->destination;
 }
 
+int set_laneID( Vehicle V, int laneID ) {
+	V->laneID = laneID;
+	return 0;
+}
+
+int get_laneID( Vehicle V ) {
+	return V->laneID;
+}
+
+int set_velocity( Vehicle V, double velocity ) {
+	V->velocity = velocity;
+	return 0;
+}
+
+double get_velocity( Vehicle V ) {
+	return V->velocity;
+}
+
 int set_arrival_time( Vehicle V, double arrivalTime ) {
 	if( V == NULL		 ) return -1;
 	if( arrivalTime < 0.0) return -1;
@@ -79,6 +105,24 @@ int add_wait_time( Vehicle V, double waitTime ) {
 
 double get_wait_time( Vehicle V ) {
 	return V->waitTime;
+}
+
+int set_wait_time_buf( Vehicle V, double waitTimeBuf ) {
+	V->waitTimeBuf = waitTimeBuf;
+	return 0;
+}
+
+double get_wait_time_buf( Vehicle V ) {
+	return V->waitTimeBuf;
+}
+
+int set_temp_distance( Vehicle V, double tempDistance ) {
+	V->tempDistance = tempDistance;
+	return 0;
+}
+
+double get_temp_distance( Vehicle V ) {
+	return V->tempDistance;
 }
 
 /* eof */

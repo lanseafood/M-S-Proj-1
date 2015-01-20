@@ -58,6 +58,38 @@ int set_destination( Vehicle V, int destination );
 int get_destination( Vehicle V );
 
 /**
+ * Sets lane ID of Vehicle
+ *
+ * @return: 0 on success, -1 otherwise
+ **/
+int set_laneID( Vehicle V, int laneID );
+
+/**
+ * Gets lane ID of Vehicle
+ *
+ * @params: Pointer to Vehicle
+ * @return: Lane ID of Vehicle on success, -1 otherwise
+ **/
+int get_laneID( Vehicle V );
+
+/**
+ * 
+ * Sets current velocity of Vehicle
+ *
+ * @params: Pointer to Vehicle
+ * @return: 0 on success, -1 otherwise
+ **/
+int set_velocity( Vehicle V, double velocity );
+
+/**
+ * Gets current velocity of Vehicle
+ *
+ * @params: Pointer to Vehicle
+ * @return: Velocity of Vehicle on success, -1 otherwise
+ **/
+double get_velocity( Vehicle V );
+
+/**
  * Sets arrival time of Vehicle
  *
  * @return: 0 on success, -1 otherwise
@@ -86,6 +118,14 @@ int add_wait_time( Vehicle V, double waitTime );
  * @return: Arrival time of Vehicle on success, -1 otherwise
  **/
 double get_wait_time( Vehicle V );
+
+int set_wait_time_buf( Vehicle V, double waitTimeBuf );
+
+double get_wait_time_buf( Vehicle V );
+
+int set_temp_distance( Vehicle V, double tempDistance );
+
+double get_temp_distance( Vehicle V );
 
 
 #endif

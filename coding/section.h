@@ -9,9 +9,8 @@
 #ifndef traffic_section_h
 #define traffic_section_h
 
-// Declare abstract type of Vehicle
+// Declare abstract type of Section
 typedef struct SectionType *Section;
-
 
 Section create_section(int zoneID);
 
