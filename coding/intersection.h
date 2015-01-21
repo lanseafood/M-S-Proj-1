@@ -45,6 +45,20 @@ typedef struct {
 
 Intersection create_intersection();
 
+int ***get_signalStatus(Intersection I);
+
+double *get_phaseLengths(Intersection I);
+
+LinkedList **get_laneQueues(Intersection I);
+
+int *get_numLanes(Intersection I);
+
+int get_maxPhase(Intersection I);
+
+int get_currPhase(Intersection I);
+
+int set_next_phase(Intersection I);
+
 int get_inter_zoneID(Intersection I);
 
 int get_signal_zoneID(Signal *S);

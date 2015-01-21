@@ -20,9 +20,11 @@
 struct IntersectionType {
 	int zoneID;
 	Signal **signals; // 0-3: straight (NESW), 4-7: left (NESW)
+		//signals[direction][laneid]
 	
 	// Queues
 	LinkedList **laneQueues;
+
 	// Lane flags to control the entering phase on each lane
 	// 0: no vehicle is currently entering
 	// 1; lane is in use, no entering event allowed
@@ -38,7 +40,13 @@ struct IntersectionType {
 	
 	// Wait times
 	// .. //
-	
+
+	int ***signalStatus; //direction (4) x numLanes x maxPhase
+	double *phaseLengths;
+
+	int maxPhase; //make this +1 than nec.?
+	int currPhase;
+
 	// Distance traveling in either direction (going straight)
 	double ns_len;
 	double ew_len;
@@ -47,6 +55,7 @@ struct IntersectionType {
 // Allocate and initialize queues, lane flags and lane counter
 static void set_up_lanes( Intersection I );
 
+
 //creates intersection and its respective signals
 Intersection create_intersection(int zoneID) {
 	Intersection I = (Intersection) malloc( sizeof(struct IntersectionType));
@@ -54,6 +63,9 @@ Intersection create_intersection(int zoneID) {
 	
 	Signal **signals = (Signal **) malloc(8*sizeof(Signal *));
 	I->signals = signals;
+
+	int ***signalStatus = (int ***) malloc(4*sizeof(int **)); //num_dir
+	
 
 	for (int i=0; i<8; i++) {
 		I->signals[i] = (Signal *) malloc(sizeof(Signal));
@@ -72,6 +84,8 @@ Intersection create_intersection(int zoneID) {
 	
 	// Allocate lane arrays for each direction ( N-E-S-W )
 	I->laneQueues        = (LinkedList **)malloc(4*sizeof(LinkedList *));
+	//for (int i=0; i<)
+
 	I->laneFlags         = (int        **)malloc(4*sizeof(int        *));
 	I->laneCounters      = (int        **)malloc(4*sizeof(int        *));
 	I->crossingDistances = (double     **)malloc(4*sizeof(double     *));
@@ -80,11 +94,24 @@ Intersection create_intersection(int zoneID) {
 		// Distances
 		ns_len = 99.73;
 		ew_len = 106;
-		
+
 		// Allocate and initialize lane arrays
 		I->numLanes[NORTH] = 3; I->numLanes[EAST] = 3;
 		I->numLanes[SOUTH] = 3; I->numLanes[WEST] = 4;
 		set_up_lanes( I );
+
+		/*TODO_SIGNALS
+		I->maxPhase = maxPhase;
+		for (int i=0; i<4; i++) {
+			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
+			for (int j=0; j<I->numLanes[i]; j++) {
+				signalStatus[i][j] = (int *) malloc(I->maxPhase*sizeof(int)); //num-phases
+			}
+		}
+
+		***Set up signalStatus array (after mapping out phases)***
+
+		*/
 		
 		// Set crossing distances (j: Right-Straight-Left) for each direction
 		for( int j = 0; j < 3; j++ ) {
@@ -113,8 +140,77 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->signals[3]->times, ((double [3]){20.3,3.6,76.2}), 3*sizeof(double));
 
 		for (int i=4; i<8; i++) {
-			memcpy(I->signals[i]->times, ((double [3]){0,0,0}), 3*sizeof(double)); 
+			//memcpy(I->signals[i]->times, ((double [3]){0,0,0}), 3*sizeof(double)); 
+			I->signals[i] = NULL;
 		}
+
+		/*TODO_SIGNALS*/
+		I->maxPhase = 5; //phases 0-4 (5 cycles back to 0)
+		I->phaseLengths = (double *) malloc(I->maxPhase*sizeof(double));
+		I->phaseLengths[0] = 41.5;
+		I->phaseLengths[1] = 3.2;
+		I->phaseLengths[2] = 31.5;		
+		I->phaseLengths[3] = 20.3;
+		I->phaseLengths[4] = 3.6;
+
+		for (int i=0; i<4; i++) {
+			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
+			for (int j=0; j<I->numLanes[i]; j++) {
+				signalStatus[i][j] = (int *) malloc(I->maxPhase*sizeof(int)); //num-phases
+			}
+		}
+
+		for (int i=0; i<4; i++) { //direction
+			for (int j=0; j<I->numLanes[i]; j++) { //numlanes
+				for (int k=0; k<I->maxPhase; k++) { //phases
+					if (k==0) { //phase 0
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = GREEN;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}
+					} else if (k==1) { //phase 1
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = YELLOW;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==2) { //phase 2
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==3) { //phase 3
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = GREEN;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==4) { //phase 4
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = YELLOW;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} 					
+				}
+			}
+		}
+
+		/***Set up signalStatus array (after mapping out phases)***/
+
+		
 	}
 	else if (zoneID==3) {
 		ns_len = 73.51;
@@ -126,8 +222,22 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->signals[3]->times, ((double [3]){27.3,3.6,69.2}), 3*sizeof(double)); 
 
 		for (int i=4; i<8; i++) {
-			memcpy(I->signals[i]->times, ((double [3]){0,0,0}), 3*sizeof(double)); 
+			//memcpy(I->signals[i]->times, ((double [3]){0,0,0}), 3*sizeof(double)); 
+			I->signals[i] = NULL;
 		}
+
+		/*TODO_SIGNALS
+		I->maxPhase = maxPhase;
+		for (int i=0; i<4; i++) {
+			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
+			for (int j=0; j<I->numLanes[i]; j++) {
+				signalStatus[i][j] = (int *) malloc(I->maxPhase*sizeof(int)); //num-phases
+			}
+		}
+
+		***Set up signalStatus array (after mapping out phases)***
+
+		*/
 
 	}
 	else if (zoneID==4) {
@@ -135,6 +245,7 @@ Intersection create_intersection(int zoneID) {
 		ew_len = 80;
 		for (int i=0; i<8; i++) {
 			memcpy(I->signals[i]->times, ((double [3]){0,0,0}), 3*sizeof(double)); 
+			I->signals[i] = NULL;
 		}	
 	}
 	else if (zoneID==5) {
@@ -150,12 +261,61 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->signals[6]->times, ((double [3]){11.6,3.6,.5}), 3*sizeof(double)); 
 		memcpy(I->signals[7]->times, ((double [3]){0,0,0}), 3*sizeof(double)); 
 
+		/*TODO_SIGNALS
+		I->maxPhase = maxPhase;
+		for (int i=0; i<4; i++) {
+			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
+			for (int j=0; j<I->numLanes[i]; j++) {
+				signalStatus[i][j] = (int *) malloc(I->maxPhase*sizeof(int)); //num-phases
+			}
+		}
+
+		***Set up signalStatus array (after mapping out phases)***
+
+		*/
+
 	} else ;
+
 
 	I->ns_len = ns_len;
 	I->ew_len = ew_len;
+	I->signalStatus = signalStatus;
+	I->currPhase = 0;
 
 	return I;
+}
+
+int ***get_signalStatus(Intersection I) {
+	return I->signalStatus;
+}
+
+double *get_phaseLengths(Intersection I) {
+	return I->phaseLengths;
+}
+
+LinkedList **get_laneQueues(Intersection I) {
+	return I->laneQueues;
+}
+
+int *get_numLanes(Intersection I) {
+	return I->numLanes;
+}
+
+int get_maxPhase(Intersection I) {
+	return I->maxPhase;
+}
+
+int get_currPhase(Intersection I) {
+	return I->currPhase;
+}
+
+//when setting next phase need to change signals...?
+int set_next_phase(Intersection I) {
+	I->currPhase  = (I->currPhase + 1) % I->maxPhase;
+	/*
+	depends on intersection id?
+	*/
+	return 0;
 }
 
 int get_inter_zoneID(Intersection I) {
@@ -183,6 +343,7 @@ int set_light(Intersection I, Direction D, int laneID, Color light) {
 
 Color get_light(Intersection I, Direction D, int laneID) {
 	return I->signals[D]->light;
+	//signal status
 }
 
 double get_ns_len(Intersection I) {

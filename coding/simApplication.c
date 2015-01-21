@@ -339,10 +339,63 @@ static void global_departure( void* P ) {
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
 
+
 static void IS_1_signal( void* P ) {
+	Event E = (Event) P;
+	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
+	Intersection I = get_object( E );
+	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
+	
+	printf("%6.2f, IS 1 Signal, Intersection Zone ID: %3d\n",
+		   get_sim_time(), get_inter_zoneID(I) );
+	
+	int ***signalStatus = get_signalStatus(I);
+	double *phaseLengths = get_phaseLengths(I);
+
+	Vehicle v;
+	LinkedList **laneQueues = get_laneQueues(I);
+	int maxPhase = get_maxPhase(I);
+	int *numLanes = get_numLanes(I);
+
+	set_next_phase(I); //update to next phase & change appropriate signals
+
+	for (int i=0; i<4; i++) {
+		for (int j=0; j<numLanes[i]; j++) {
+			for (int k=0; k<maxPhase; k++) {
+				if (signalStatus[i][j][k]==GREEN || signalStatus[i][j][k]==YELLOW) {
+					v = peek_from_list(laneQueues[i][j]);
+					if (v!=NULL) {
+						set_timestamp(E, get_sim_time() + phaseLengths[k]);
+						set_object(E, v);
+						set_object_type(E, VEHICLE);
+						//check left turns and directions?
+						if (i==NORTH) {
+							set_event_type(E, IS_1_N_ENTERING);
+							set_callback(E, IS_1_N_entering);
+						} else if (i==EAST) {
+							set_event_type(E, IS_1_E_ENTERING);
+							set_callback(E, IS_1_E_entering);
+						} else if (i==SOUTH) {
+							set_event_type(E, IS_1_S_ENTERING);
+							set_callback(E, IS_1_S_entering);
+						} else if (i==WEST) {
+							set_event_type(E, IS_1_W_ENTERING);
+							set_callback(E, IS_1_W_entering);
+						} else {exit(-1);}
+					}
+					schedule_event(E);
+				}
+			}
+		}
+	}
+
 	// proceed to next IS1 signal status
 	// schedule next IS1 signal event
 	
+	//TODO_EISHA
+	//update field
+	//timestamp = curr time + len of phase
+
 	// schedule entering event for corresponding lanes
 }
 
