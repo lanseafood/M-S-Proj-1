@@ -226,8 +226,15 @@ Intersection create_intersection(int zoneID) {
 			I->signals[i] = NULL;
 		}
 
-		/*TODO_SIGNALS
-		I->maxPhase = maxPhase;
+		/*TODO_SIGNALS*/
+		I->maxPhase = 5; //phases 0-4 (5 cycles back to 0)
+		I->phaseLengths = (double *) malloc(I->maxPhase*sizeof(double));
+		I->phaseLengths[0] = 61.2;
+		I->phaseLengths[1] = 3.2;
+		I->phaseLengths[2] = 4.8;		
+		I->phaseLengths[3] = 27.3;
+		I->phaseLengths[4] = 3.6;
+
 		for (int i=0; i<4; i++) {
 			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
 			for (int j=0; j<I->numLanes[i]; j++) {
@@ -235,10 +242,53 @@ Intersection create_intersection(int zoneID) {
 			}
 		}
 
-		***Set up signalStatus array (after mapping out phases)***
-
-		*/
-
+		for (int i=0; i<4; i++) { //direction
+			for (int j=0; j<I->numLanes[i]; j++) { //numlanes
+				for (int k=0; k<I->maxPhase; k++) { //phases
+					if (k==0) { //phase 0
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = GREEN;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}
+					} else if (k==1) { //phase 1
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = YELLOW;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==2) { //phase 2
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==3) { //phase 3
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = GREEN;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==4) { //phase 4
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = YELLOW;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} 					
+				}
+			}
+		}
 	}
 	else if (zoneID==4) {
 		ns_len = 66.602;

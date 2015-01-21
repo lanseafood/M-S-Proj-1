@@ -352,7 +352,7 @@ static void IS_1_signal( void* P ) {
 	int ***signalStatus = get_signalStatus(I);
 	double *phaseLengths = get_phaseLengths(I);
 
-	Vehicle v;
+	Event newEvent;
 	LinkedList **laneQueues = get_laneQueues(I);
 	int maxPhase = get_maxPhase(I);
 	int *numLanes = get_numLanes(I);
@@ -361,13 +361,13 @@ static void IS_1_signal( void* P ) {
 
 	for (int i=0; i<4; i++) {
 		for (int j=0; j<numLanes[i]; j++) {
-			for (int k=0; k<maxPhase; k++) {
-				if (signalStatus[i][j][k]==GREEN || signalStatus[i][j][k]==YELLOW) {
-					v = peek_from_list(laneQueues[i][j]);
-					if (v!=NULL) {
-						set_timestamp(E, get_sim_time() + phaseLengths[k]);
-						set_object(E, v);
-						set_object_type(E, VEHICLE);
+			//for (int k=0; k<maxPhase; k++) {
+				if (signalStatus[i][j][get_currPhase(I)]==GREEN || signalStatus[i][j][get_currPhase(I)]==YELLOW) {
+					if (get_list_counter(laneQueues[i][j]) > 0) {
+						newEvent = peek_from_list(laneQueues[i][j]);
+						set_timestamp(newEvent, get_sim_time());
+						//set_object(E, v);
+						//set_object_type(E, VEHICLE);
 						//check left turns and directions?
 						if (i==NORTH) {
 							set_event_type(E, IS_1_N_ENTERING);
@@ -383,12 +383,13 @@ static void IS_1_signal( void* P ) {
 							set_callback(E, IS_1_W_entering);
 						} else {exit(-1);}
 					}
-					schedule_event(E);
+					schedule_event(newEvent);
 				}
-			}
+			//}
 		}
 	}
-
+	set_timestamp(E, get_sim_time() + phaseLengths[k]);
+	schedule_event(E);
 	// proceed to next IS1 signal status
 	// schedule next IS1 signal event
 	
