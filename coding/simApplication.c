@@ -388,7 +388,7 @@ static void IS_1_signal( void* P ) {
 			//}
 		}
 	}
-	set_timestamp(E, get_sim_time() + phaseLengths[k]);
+	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I)]);
 	schedule_event(E);
 	// proceed to next IS1 signal status
 	// schedule next IS1 signal event
