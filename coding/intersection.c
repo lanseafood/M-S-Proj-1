@@ -21,7 +21,7 @@ struct IntersectionType {
 	int zoneID;
 	Signal **signals; // 0-3: straight (NESW), 4-7: left (NESW)
 		//signals[direction][laneid]
-	
+	int phase[7];
 	// Queues
 	LinkedList **laneQueues;
 
@@ -43,6 +43,10 @@ struct IntersectionType {
 
 	int ***signalStatus; //direction (4) x numLanes x maxPhase
 	double *phaseLengths;
+
+	/* EISHA -- naive signal switching methods
+	
+	*/
 
 	int maxPhase; //make this +1 than nec.?
 	int currPhase;
@@ -89,6 +93,12 @@ Intersection create_intersection(int zoneID) {
 	I->laneFlags         = (int        **)malloc(4*sizeof(int        *));
 	I->laneCounters      = (int        **)malloc(4*sizeof(int        *));
 	I->crossingDistances = (double     **)malloc(4*sizeof(double     *));
+
+	//EISHA: setting initial phases --> changing these initial ones will determine
+	//how the intersection is synced with itself...?
+	for (int i=0; i<8; i++) {
+		I->phase[i] = 0;
+	}
 
 	if (zoneID==1) {
 		// Distances
@@ -333,6 +343,36 @@ Intersection create_intersection(int zoneID) {
 	I->currPhase = 0;
 
 	return I;
+}
+
+int *get_phase(Intersection I) {
+	return I->phase;
+}
+
+int change_phase(Intersection I, int num) {
+	//num is 0-7, determines which dir and which signal (through/left)
+	I->phase[num] = I->phase[num] % 3;
+	return 0;
+}
+
+Signal **get_through_signals(Intersection I) {
+	Signal **signals = (Signal **) malloc(4*sizeof(Signal *));
+	Signal **i_signal = I->signals;
+
+	for (int i=0; i<4; i++) {
+		signals[i] = i_signal[i];
+	}
+	return signals;
+}
+
+Signal **get_left_signals(Intersection I) {
+	Signal **signals = (Signal **) malloc(4*sizeof(Signal *));
+	Signal **i_signal = I->signals;
+
+	for (int i=0; i<4; i++) {
+		signals[i] = i_signal[i+4];
+	}
+	return signals;
 }
 
 int ***get_signalStatus(Intersection I) {

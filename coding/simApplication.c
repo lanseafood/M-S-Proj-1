@@ -339,6 +339,80 @@ static void global_departure( void* P ) {
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
 
+//intersection 1, north through lights
+static void IS_1_signal_NT( void* P ) {
+	Event E = (Event) P;
+
+	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
+	Intersection I = get_object( E );
+	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
+	
+	printf("%6.2f, IS 1 Signal North Through, Intersection Zone ID: %3d\n",
+		   get_sim_time(), get_inter_zoneID(I) );
+	
+	Signal **signals = get_through_signals(I);
+
+	//int ***signalStatus = get_signalStatus(I);
+	//double *phaseLengths = get_phaseLengths(I);
+
+	Signal *through = signals[0];
+
+	Event newEvent;
+	LinkedList **laneQueues = get_laneQueues(I);
+	//int maxPhase = get_maxPhase(I);
+	int *numLanes = get_numLanes(I);
+
+	change_phase(I, 0); //change phase of north through signal
+	int *phase = get_phase(I); //0-7 array for different phases of each traffic light
+
+	for (int i=0; i<numLanes[NORTH]; i++) { //for all lanes in this direction 
+		//how to differentiate between lanes going left etc
+		
+	}
+
+	//set_next_phase(I); //update to next phase & change appropriate signals
+
+	for (int i=0; i<4; i++) {
+		for (int j=0; j<numLanes[i]; j++) {
+			//for (int k=0; k<maxPhase; k++) {
+				if (signalStatus[i][j][get_currPhase(I)]==GREEN || signalStatus[i][j][get_currPhase(I)]==YELLOW) {
+					if (get_list_counter(laneQueues[i][j]) > 0) {
+						newEvent = peek_from_list(laneQueues[i][j]);
+						set_timestamp(newEvent, get_sim_time());
+						//set_object(E, v);
+						//set_object_type(E, VEHICLE);
+						//check left turns and directions?
+						if (i==NORTH) {
+							set_event_type(newEvent, IS_1_N_ENTERING);
+							set_callback(newEvent, IS_1_N_entering);
+						} else if (i==EAST) {
+							set_event_type(newEvent, IS_1_E_ENTERING);
+							set_callback(newEvent, IS_1_E_entering);
+						} else if (i==SOUTH) {
+							set_event_type(newEvent, IS_1_S_ENTERING);
+							set_callback(newEvent, IS_1_S_entering);
+						} else if (i==WEST) {
+							set_event_type(newEvent, IS_1_W_ENTERING);
+							set_callback(newEvent, IS_1_W_entering);
+						} else {exit(-1);}
+					}
+					schedule_event(newEvent);
+				}
+			//}
+		}
+	}
+	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I)]);
+	schedule_event(E);
+	// proceed to next IS1 signal status
+	// schedule next IS1 signal event
+	
+	//TODO_EISHA
+	//update field
+	//timestamp = curr time + len of phase
+
+	// schedule entering event for corresponding lanes
+}
+
 
 static void IS_1_signal( void* P ) {
 	Event E = (Event) P;
@@ -370,17 +444,17 @@ static void IS_1_signal( void* P ) {
 						//set_object_type(E, VEHICLE);
 						//check left turns and directions?
 						if (i==NORTH) {
-							set_event_type(E, IS_1_N_ENTERING);
-							set_callback(E, IS_1_N_entering);
+							set_event_type(newEvent, IS_1_N_ENTERING);
+							set_callback(newEvent, IS_1_N_entering);
 						} else if (i==EAST) {
-							set_event_type(E, IS_1_E_ENTERING);
-							set_callback(E, IS_1_E_entering);
+							set_event_type(newEvent, IS_1_E_ENTERING);
+							set_callback(newEvent, IS_1_E_entering);
 						} else if (i==SOUTH) {
-							set_event_type(E, IS_1_S_ENTERING);
-							set_callback(E, IS_1_S_entering);
+							set_event_type(newEvent, IS_1_S_ENTERING);
+							set_callback(newEvent, IS_1_S_entering);
 						} else if (i==WEST) {
-							set_event_type(E, IS_1_W_ENTERING);
-							set_callback(E, IS_1_W_entering);
+							set_event_type(newEvent, IS_1_W_ENTERING);
+							set_callback(newEvent, IS_1_W_entering);
 						} else {exit(-1);}
 					}
 					schedule_event(newEvent);
