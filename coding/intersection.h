@@ -45,6 +45,18 @@ typedef struct {
 
 Intersection create_intersection();
 
+int set_red(Intersection I, int num);
+
+int get_curr_phase(Intersection I, int curr);
+
+int *get_phase(Intersection I);
+
+int change_phase(Intersection I, int num);
+
+Signal **get_through_signals(Intersection I);
+
+Signal **get_left_signals(Intersection I);
+
 int ***get_signalStatus(Intersection I);
 
 double *get_phaseLengths(Intersection I);

@@ -345,6 +345,16 @@ Intersection create_intersection(int zoneID) {
 	return I;
 }
 
+//should only be used for left turns
+int set_red(Intersection I, int num) {
+	I->phase[num] = 2;
+	return 0;
+}
+
+int get_curr_phase(Intersection I, int curr) {
+	return I->phase[curr];
+}
+
 int *get_phase(Intersection I) {
 	return I->phase;
 }
