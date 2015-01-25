@@ -172,7 +172,8 @@ void create_sim( double simEnd ) {
 	set_up_sim();
 
 	Event inter1 = init_event(0, IS_1, INTERSECTION, IS_1_SIGNAL, IS_1_signal); 
-	
+	schedule_event(inter1);
+
 	// Initialize and schedule first event (global arrival)
 	Event firstArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
 	schedule_event( firstArrival );
@@ -516,30 +517,47 @@ static void IS_1_signal( void* P ) {
 	printf("%6.2f, IS 1 Signal, Intersection Zone ID: %3d\n",
 		   get_sim_time(), get_inter_zoneID(I) );
 	
-	int ***signalStatus = get_signalStatus(I);
-	int ***leftSignalStatus = get_leftSignalStatus(I);
-	double *phaseLengths = get_phaseLengths(I);
+	//printf("a\n");
 
-	Event newEvent;
+	int ***signalStatus = get_signalStatus(I);
+	//printf("b\n");
+
+	int ***leftSignalStatus = get_leftSignalStatus(I);
+	//printf("blah %d\n", leftSignalStatus[0][0][0]);
+	//printf("c\n");
+
+	double *phaseLengths = get_phaseLengths(I);
+	//printf("d\n");
+
+	Event newEvent = NULL;
 	LinkedList **laneQueues = get_laneQueues(I);
 	int maxPhase = get_maxPhase(I);
 	int *numLanes = get_numLanes(I);
 	
-
+	//printf("e\n");
 	set_next_phase(I); //update to next phase & change appropriate signals
 	int curr_phase = get_currPhase(I);
 
+	//printf("currphase: %d\n", curr_phase);
 	//left turns..?
 	//IMPORTANT: left turn indexing 
 
 	//hmmmmmm
 
+	//printf("f\n");
 	for (int i=0; i<4; i++) {
 		for (int j=0; j<numLanes[i]; j++) {
+			//printf("i: %d, j: %d, ss=%d\n", i, j, signalStatus[i][j][curr_phase]);
+			//printf("lss=%d\n", leftSignalStatus[i][j][curr_phase]);
 			if (signalStatus[i][j][curr_phase]==GREEN || signalStatus[i][j][curr_phase]==YELLOW) {
+				printf("x: %d\n", get_list_counter(laneQueues[i][j]));
+				printf("y: %d\n", get_lane_flag(I, i, j)); 
 				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
 					newEvent = peek_from_list(laneQueues[i][j]);
 					set_timestamp(newEvent, get_sim_time());
+					Vehicle v = get_object(newEvent);
+					printf("j: %d, vehicle laneID: %d\n", j, get_laneID(v));
+					//printf("j: %d, vehicle laneID: %d\n", j, get_laneID(get_object(newEvent)));
 					if (i==NORTH && (j>0)) {
 						set_event_type(newEvent, IS_1_N_ENTERING);
 						set_callback(newEvent, IS_1_N_entering);
@@ -549,6 +567,7 @@ static void IS_1_signal( void* P ) {
 						set_event_type(newEvent, IS_1_E_ENTERING);
 						set_callback(newEvent, IS_1_E_entering);
 					} else if (i==SOUTH && (j>0)) {
+						printf("south through\n");
 						//TODO: left turn should only enter if north lane 1/2
 						//cars are not going straight
 						set_event_type(newEvent, IS_1_S_ENTERING);
@@ -558,19 +577,29 @@ static void IS_1_signal( void* P ) {
 						//is not going straight
 						set_event_type(newEvent, IS_1_W_ENTERING);
 						set_callback(newEvent, IS_1_W_entering);
-					} else {exit(-1);}
-				} else if (leftSignalStatus[i][j][curr_phase]==GREEN || leftSignalStatus[i][j][curr_phase]==YELLOW) {
+					} else {
+						exit(-1);
+					}
+				} 
+			} else if (leftSignalStatus[i][j][curr_phase]==GREEN || leftSignalStatus[i][j][curr_phase]==YELLOW) {
+				//printf("x2: %d\n", get_list_counter(laneQueues[i][j]));
+				//printf("y2: %d\n", get_lane_flag(I, i, j)); 
+				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
 					newEvent = peek_from_list(laneQueues[i][j]);//j==0
 					set_timestamp(newEvent, get_sim_time());
+					Vehicle v = get_object(newEvent);
+					printf("j: %d, vehicle laneID: %d\n", j, get_laneID(v));
 					if (i==NORTH && (j==0)) {
 						set_event_type(newEvent, IS_1_N_ENTERING);
 						set_callback(newEvent, IS_1_N_entering);
 					} else if (i==EAST && (j==0)) {
+						printf("hi\n");
 						//TODO: left turn should only enter intersection if 
 						//west lane 1 cars are not going straight
 						set_event_type(newEvent, IS_1_E_ENTERING);
 						set_callback(newEvent, IS_1_E_entering);
 					} else if (i==SOUTH && (j==0)) {
+						printf("south left\n");
 						//TODO: left turn should only enter if north lane 1/2
 						//cars are not going straight
 						set_event_type(newEvent, IS_1_S_ENTERING);
@@ -580,14 +609,19 @@ static void IS_1_signal( void* P ) {
 						//is not going straight
 						set_event_type(newEvent, IS_1_W_ENTERING);
 						set_callback(newEvent, IS_1_W_entering);
-					} else {exit(-1);}
-					
+					} else {
+						exit(-1);
+					}
 				}
-
+			}
+			if (newEvent != NULL) {
+				printf("scheduling\n");
 				schedule_event(newEvent);
 			}
-		} 
+		}
+		 
 	}
+	printf("set next signal event \n");
 	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I)]);
 	schedule_event(E);
 }
@@ -621,6 +655,7 @@ static void IS_2_signal( void* P ) {
 						//set_object(E, v);
 						//set_object_type(E, VEHICLE);
 						//check left turns and directions?
+
 						if (i==NORTH) {
 							set_event_type(newEvent, IS_1_N_ENTERING);
 							set_callback(newEvent, IS_1_N_entering);
@@ -818,17 +853,41 @@ static void IS_1_S_arrival( void* P ) {
 	set_laneID( V, newLane );
 	// Check traffic signal
 	if( get_light( IS_1, SOUTH, newLane ) == INV ) { fprintf(stderr,"IS_1_W_arrival(): INV traffic signal\n"); }
-	if( get_light( IS_1, SOUTH, newLane ) != GREEN ) {
+	if( get_light( IS_1, SOUTH, newLane ) == RED) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
 		add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
 	} else {
+		printf("whee\n");
 		// If queue is empty, and no vehicle is currently entering,
 		// schedule entering event directly
 		if(   get_list_counter( get_lane_queue( IS_1, SOUTH, newLane ) ) == 0
 		   && get_lane_flag( IS_1, SOUTH, newLane ) == 0 )
 		{
+			printf("scheduling, lane: %d\n", newLane);
+			printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
 			add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
+			printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
+			
+			Event x = (Event) peek_from_list( get_lane_queue( IS_1, SOUTH, newLane ) );
+			if (x==NULL) {
+				printf("x is null\n");
+			}
+			printf("timestamp x: %lf\n", get_timestamp(x));
+			printf("obj type x: %d\n", get_object_type(x));
+			printf("event type x: %d, \n", get_event_type(x));
+			printf("event type E: %d\n", get_event_type(E));
+			Vehicle veh = get_object(x);
+			if (veh==NULL) {
+				printf("vehicle is null\n");
+			}
+			printf("%6.2f, test: IS 1 South Arrival  , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
+		   get_sim_time(), get_id(veh), get_origin(veh), get_destination(veh) );
+
+			if( peek_from_list( get_lane_queue( IS_1, SOUTH, newLane ) ) == NULL ) {
+				printf("AOSFHOIAF\n");
+			}
+
 			schedule_event( E );
 		} // Else: put vehicle in queue
 		else {
@@ -974,7 +1033,11 @@ static void IS_1_S_entering( void* P ) {
 		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	int laneID = get_laneID( V );
+	printf("laneID: %d\n", laneID);
+	printf("num2: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, laneID)));
 	// Check if this event is first in the queue
+	Event test = peek_from_list( get_lane_queue( IS_1, SOUTH, laneID ) );
+	//printf("obj: %d")
 	if( peek_from_list( get_lane_queue( IS_1, SOUTH, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_1_S_entering(): E is not first in queue\n"); exit(1);
 	}

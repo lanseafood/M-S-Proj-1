@@ -156,6 +156,7 @@ Intersection create_intersection(int zoneID) {
 
 
 		for (int i=0; i<4; i++) {
+			
 			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
 			leftSignalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *));
 			for (int j=0; j<I->numLanes[i]; j++) {
@@ -175,6 +176,7 @@ Intersection create_intersection(int zoneID) {
 						} else {
 							signalStatus[i][j][k] = INV;
 						}
+					//	printf("HELLO\n");
 						leftSignalStatus[i][j][k] = RED;
 					} else if (k==1) { //phase 1
 						if (i==NORTH || i==SOUTH) {
@@ -468,7 +470,8 @@ Intersection create_intersection(int zoneID) {
 	I->ns_len = ns_len;
 	I->ew_len = ew_len;
 	I->signalStatus = signalStatus;
-	I->currPhase = 0;
+	I->leftSignalStatus = leftSignalStatus;
+	I->currPhase = I->maxPhase-1;
 
 	return I;
 }
@@ -519,6 +522,7 @@ int ***get_signalStatus(Intersection I) {
 }
 
 int ***get_leftSignalStatus(Intersection I) {
+	printf("yo\n");
 	return I->leftSignalStatus;
 }
 

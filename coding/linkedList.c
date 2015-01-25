@@ -55,8 +55,8 @@ int add_to_list( LinkedList L, ptr P ) {
 	}
 	E->element = P;
 	E->next = NULL;
-	if( L->head == NULL ) L->head = E;
-	if( L->tail != NULL ) L->tail->next = E;
+	if( L->head == NULL ) { L->head = E; printf("added head\n"); }
+	if( L->tail != NULL ) {L->tail->next = E; printf("tail not null\n");}
 	L->tail = E;
 	L->counter++;
     
@@ -65,7 +65,9 @@ int add_to_list( LinkedList L, ptr P ) {
 
 ptr peek_from_list( LinkedList L ) {
 	if( L == NULL ) { fprintf(stderr,"Warning from LL peek_from_list(): L is NULL\n"); return NULL; }
-	return L->head;
+	
+
+	return L->head->element;
 }
 
 ptr poll_from_list( LinkedList L ) {
