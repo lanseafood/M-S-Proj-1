@@ -170,6 +170,8 @@ void create_sim( double simEnd ) {
 		
 	// Call engine setup
 	set_up_sim();
+
+	Event inter1 = init_event(0, IS_1, INTERSECTION, IS_1_SIGNAL, IS_1_signal); 
 	
 	// Initialize and schedule first event (global arrival)
 	Event firstArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
@@ -177,14 +179,14 @@ void create_sim( double simEnd ) {
 	
 	// Create traffic signal events for each intersection
 	// .. //
-	Event signal1 = init_event(0, NULL, INTERSECTION, IS1_INITIAL, IS1_initial);
-	Event signal2 = init_event(0, NULL, INTERSECTION, IS2_INITIAL, IS2_initial);
+//	Event signal1 = init_event(0, NULL, INTERSECTION, IS1_INITIAL, IS1_initial);
+//	Event signal2 = init_event(0, NULL, INTERSECTION, IS2_INITIAL, IS2_initial);
 /*	Event signal3 = init_event(0, NULL, INTERSECTION, IS3_INITIAL, IS3_initial);
 	Event signal4 = init_event(0, NULL, INTERSECTION, IS4_INITIAL, IS4_initial);
 	Event signal5 = init_event(0, NULL, INTERSECTION, IS5_INITIAL, IS5_initial);
 */
-	schedule_event(signal1);
-	schedule_event(signal2);
+//	schedule_event(signal1);
+//	schedule_event(signal2);
 /*	schedule_event(signal3);
 	schedule_event(signal4);
 	schedule_event(signal5);
@@ -272,12 +274,16 @@ static int pick_destination( int origin_id ) {
 
 static void IS1_initial(void *P) {
 	Event E = (Event) P;
+
+	printf("%6.2f, IS 1 init\n",
+		   get_sim_time());
+	
+
 	Intersection I1 = create_intersection(1);
-	set_up_lanes(I1);
 	
 	set_object(E, I1);
 
-	int *phaseLengths = get_phaseLengths(I1);
+	double *phaseLengths = get_phaseLengths(I1);
 
 	//or do we need a 'newEvent' to set up the next signal switch?
 	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I1)]);
@@ -289,12 +295,15 @@ static void IS1_initial(void *P) {
 
 static void IS2_initial(void *P) {
 	Event E = (Event) P;
+	
+	printf("%6.2f, IS 2 init\n",
+		   get_sim_time());
+
 	Intersection I2 = create_intersection(2);
-	set_up_lanes(I2);
 	
 	set_object(E, I2);
 
-	int *phaseLengths = get_phaseLengths(I2);
+	double *phaseLengths = get_phaseLengths(I2);
 
 	//or do we need a 'newEvent' to set up the next signal switch?
 	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I2)]);
@@ -528,7 +537,7 @@ static void IS_1_signal( void* P ) {
 	for (int i=0; i<4; i++) {
 		for (int j=0; j<numLanes[i]; j++) {
 			if (signalStatus[i][j][curr_phase]==GREEN || signalStatus[i][j][curr_phase]==YELLOW) {
-				if (get_list_counter(laneQueues[i][j]) > 0) {
+				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
 					newEvent = peek_from_list(laneQueues[i][j]);
 					set_timestamp(newEvent, get_sim_time());
 					if (i==NORTH && (j>0)) {
@@ -572,7 +581,9 @@ static void IS_1_signal( void* P ) {
 						set_event_type(newEvent, IS_1_W_ENTERING);
 						set_callback(newEvent, IS_1_W_entering);
 					} else {exit(-1);}
+					
 				}
+
 				schedule_event(newEvent);
 			}
 		} 
@@ -587,7 +598,7 @@ static void IS_2_signal( void* P ) {
 	Intersection I = get_object( E );
 	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
 	
-	printf("%6.2f, IS 1 Signal, Intersection Zone ID: %3d\n",
+	printf("%6.2f, IS 2 Signal, Intersection Zone ID: %3d\n",
 		   get_sim_time(), get_inter_zoneID(I) );
 	
 	int ***signalStatus = get_signalStatus(I);

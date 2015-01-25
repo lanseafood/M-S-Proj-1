@@ -222,7 +222,7 @@ Intersection create_intersection(int zoneID) {
 							leftSignalStatus[i][j][k] = RED;
 						} else if (i==EAST || i==WEST) {
 							signalStatus[i][j][k] = RED;
-							leftSignalStatus = YELLOW;
+							leftSignalStatus[i][j][k] = YELLOW;
 						} else {
 							signalStatus[i][j][k] = INV;
 						}						
@@ -274,6 +274,11 @@ Intersection create_intersection(int zoneID) {
 			//memcpy(I->signals[i]->times, ((double [3]){0,0,0}), 3*sizeof(double)); 
 			I->signals[i] = NULL;
 		}
+
+		// Allocate and initialize lane arrays
+		I->numLanes[NORTH] = 2; I->numLanes[EAST] = 2;
+		I->numLanes[SOUTH] = 3; I->numLanes[WEST] = 1;
+		set_up_lanes( I );
 
 		/*TODO_SIGNALS*/
 		I->maxPhase = 5; //phases 0-4 (5 cycles back to 0)
@@ -570,7 +575,8 @@ int set_light(Intersection I, Direction D, int laneID, Color light) {
 }
 
 Color get_light(Intersection I, Direction D, int laneID) {
-	return I->signals[D]->light;
+	//return I->signals[D]->light;
+	return I->signalStatus[D][laneID][get_currPhase(I)];
 	//signal status
 }
 
