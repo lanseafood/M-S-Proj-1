@@ -517,28 +517,28 @@ static void IS_1_signal( void* P ) {
 	printf("%6.2f, IS 1 Signal, Intersection Zone ID: %3d\n",
 		   get_sim_time(), get_inter_zoneID(I) );
 	
-	printf("a\n");
+	//printf("a\n");
 
 	int ***signalStatus = get_signalStatus(I);
-	printf("b\n");
+	//printf("b\n");
 
 	int ***leftSignalStatus = get_leftSignalStatus(I);
-	printf("blah %d\n", leftSignalStatus[0][0][0]);
-	printf("c\n");
+	//printf("blah %d\n", leftSignalStatus[0][0][0]);
+	//printf("c\n");
 
 	double *phaseLengths = get_phaseLengths(I);
-	printf("d\n");
+	//printf("d\n");
 
 	Event newEvent = NULL;
 	LinkedList **laneQueues = get_laneQueues(I);
 	int maxPhase = get_maxPhase(I);
 	int *numLanes = get_numLanes(I);
 	
-	printf("e\n");
+	//printf("e\n");
 	set_next_phase(I); //update to next phase & change appropriate signals
 	int curr_phase = get_currPhase(I);
 
-	printf("currphase: %d\n", curr_phase);
+	//printf("currphase: %d\n", curr_phase);
 	//left turns..?
 	//IMPORTANT: left turn indexing 
 
@@ -547,16 +547,16 @@ static void IS_1_signal( void* P ) {
 	//printf("f\n");
 	for (int i=0; i<4; i++) {
 		for (int j=0; j<numLanes[i]; j++) {
-			printf("i: %d, j: %d, ss=%d\n", i, j, signalStatus[i][j][curr_phase]);
-			printf("lss=%d\n", leftSignalStatus[i][j][curr_phase]);
+			//printf("i: %d, j: %d, ss=%d\n", i, j, signalStatus[i][j][curr_phase]);
+			//printf("lss=%d\n", leftSignalStatus[i][j][curr_phase]);
 			if (signalStatus[i][j][curr_phase]==GREEN || signalStatus[i][j][curr_phase]==YELLOW) {
-				printf("x: %d\n", get_list_counter(laneQueues[i][j]));
-				printf("y: %d\n", get_lane_flag(I, i, j)); 
+				//printf("x: %d\n", get_list_counter(laneQueues[i][j]));
+				//printf("y: %d\n", get_lane_flag(I, i, j)); 
 				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
 					newEvent = peek_from_list(laneQueues[i][j]);
 					set_timestamp(newEvent, get_sim_time());
 					Vehicle v = get_object(newEvent);
-					printf("j: %d, vehicle laneID: %d\n", j, get_laneID(v));
+					//printf("j: %d, vehicle laneID: %d\n", j, get_laneID(v));
 					//printf("j: %d, vehicle laneID: %d\n", j, get_laneID(get_object(newEvent)));
 					if (i==NORTH && (j>0)) {
 						set_event_type(newEvent, IS_1_N_ENTERING);
@@ -845,7 +845,7 @@ static void IS_1_S_arrival( void* P ) {
 		}
 		default: // Straight
 		{
-			printf("straight\n");
+			//printf("straight\n");
 			// Choose shorter lane
 			newLane = ( get_list_counter( get_lane_queue( IS_1, SOUTH, 3 ) ) <
 					    get_list_counter( get_lane_queue( IS_1, SOUTH, 2 ) )
@@ -857,7 +857,7 @@ static void IS_1_S_arrival( void* P ) {
 	if( get_light( IS_1, SOUTH, newLane ) == INV ) { fprintf(stderr,"IS_1_W_arrival(): INV traffic signal\n"); }
 	if( get_light( IS_1, SOUTH, newLane ) == RED) {
 		// Put vehicle in queue
-		printf("red\n");
+		//printf("red\n");
 		set_velocity( V, 0.0 );
 		add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
 	} else {

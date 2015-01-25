@@ -522,7 +522,7 @@ int ***get_signalStatus(Intersection I) {
 }
 
 int ***get_leftSignalStatus(Intersection I) {
-	printf("yo\n");
+	//printf("yo\n");
 	return I->leftSignalStatus;
 }
 
@@ -580,7 +580,8 @@ int set_light(Intersection I, Direction D, int laneID, Color light) {
 
 Color get_light(Intersection I, Direction D, int laneID) {
 	//return I->signals[D]->light;
-	return I->signalStatus[D][laneID][get_currPhase(I)];
+	printf("curr phase: %d, laneID: %d, dir: %d\n", get_currPhase(I), laneID, D);
+	return I->signalStatus[D][laneID-1][get_currPhase(I)];
 	//signal status
 }
 

@@ -55,8 +55,8 @@ int add_to_list( LinkedList L, ptr P ) {
 	}
 	E->element = P;
 	E->next = NULL;
-	if( L->head == NULL ) { L->head = E; printf("added head\n"); }
-	if( L->tail != NULL ) {L->tail->next = E; printf("tail not null\n");}
+	if( L->head == NULL ) { L->head = E; /*printf("added head\n");*/ }
+	if( L->tail != NULL ) {L->tail->next = E; /*printf("tail not null\n");*/}
 	L->tail = E;
 	L->counter++;
     
