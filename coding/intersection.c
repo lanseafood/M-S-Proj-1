@@ -42,6 +42,7 @@ struct IntersectionType {
 	// .. //
 
 	int ***signalStatus; //direction (4) x numLanes x maxPhase
+	int ***leftSignalStatus; //direction (4) x numLanes x maxPhase
 	double *phaseLengths;
 
 	/* EISHA -- naive signal switching methods
@@ -68,8 +69,8 @@ Intersection create_intersection(int zoneID) {
 	Signal **signals = (Signal **) malloc(8*sizeof(Signal *));
 	I->signals = signals;
 
-	int ***signalStatus = (int ***) malloc(4*sizeof(int **)); //num_dir
-	
+	int ***signalStatus = (int ***) malloc(4*sizeof(int **)); //num_dir (NESW-through);
+	int ***leftSignalStatus = (int ***) malloc(4*sizeof(int **));
 
 	for (int i=0; i<8; i++) {
 		I->signals[i] = (Signal *) malloc(sizeof(Signal));
@@ -140,6 +141,126 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->signals[5]->times, ((double [3]){8,1.8,1.8}), 3*sizeof(double));
 		memcpy(I->signals[6]->times, ((double [3]){7,3.6,2.2}), 3*sizeof(double));
 		memcpy(I->signals[7]->times, ((double [3]){5,3.6,4.2}), 3*sizeof(double));
+
+		I->maxPhase = 9; //phases 0-4 (5 cycles back to 0)
+		I->phaseLengths = (double *) malloc(I->maxPhase*sizeof(double));
+		I->phaseLengths[0] = 34.9;
+		I->phaseLengths[1] = 3.8;
+		I->phaseLengths[2] = 7;		
+		I->phaseLengths[3] = 3.6;
+		I->phaseLengths[4] = 8;
+		I->phaseLengths[5] = 2.4;
+		I->phaseLengths[6] = 7.1;
+		I->phaseLengths[7] = 30;		
+		I->phaseLengths[8] = 3.2;
+
+
+		for (int i=0; i<4; i++) {
+			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
+			leftSignalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *));
+			for (int j=0; j<I->numLanes[i]; j++) {
+				signalStatus[i][j] = (int *) malloc(I->maxPhase*sizeof(int)); //num-phases
+				leftSignalStatus[i][j] = (int *) malloc(I->maxPhase*sizeof(int));
+			}
+		}
+
+		for (int i=0; i<4; i++) { //direction
+			for (int j=0; j<I->numLanes[i]; j++) { //numlanes
+				for (int k=0; k<I->maxPhase; k++) { //phases
+					if (k==0) { //phase 0
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = GREEN;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}
+						leftSignalStatus[i][j][k] = RED;
+					} else if (k==1) { //phase 1
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = YELLOW;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}
+						leftSignalStatus[i][j][k] = RED;						
+					} else if (k==2) { //phase 2
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = GREEN;
+
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==3) { //phase 3
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = YELLOW;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==4) { //phase 4
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = GREEN;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==5) { //phase 5
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus = YELLOW;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==6) { //phase 6
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==7) { //phase 7
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = GREEN;
+							leftSignalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} else if (k==8) { //phase 8
+						if (i==NORTH || i==SOUTH) {
+							signalStatus[i][j][k] = RED;
+							leftSignalStatus[i][j][k] = RED;
+						} else if (i==EAST || i==WEST) {
+							signalStatus[i][j][k] = YELLOW;
+							leftSignalStatus[i][j][k] = RED;
+						} else {
+							signalStatus[i][j][k] = INV;
+						}						
+					} 													
+				}
+			}
+		}
+
 	}
 	else if (zoneID==2) {
 		ns_len = 129.88;
@@ -162,6 +283,8 @@ Intersection create_intersection(int zoneID) {
 		I->phaseLengths[2] = 31.5;		
 		I->phaseLengths[3] = 20.3;
 		I->phaseLengths[4] = 3.6;
+
+
 
 		for (int i=0; i<4; i++) {
 			signalStatus[i] = (int **) malloc(I->numLanes[i]*sizeof(int *)); //num-lanes
@@ -355,6 +478,7 @@ int get_curr_phase(Intersection I, int curr) {
 	return I->phase[curr];
 }
 
+
 int *get_phase(Intersection I) {
 	return I->phase;
 }
@@ -389,6 +513,10 @@ int ***get_signalStatus(Intersection I) {
 	return I->signalStatus;
 }
 
+int ***get_leftSignalStatus(Intersection I) {
+	return I->leftSignalStatus;
+}
+
 double *get_phaseLengths(Intersection I) {
 	return I->phaseLengths;
 }
@@ -409,7 +537,7 @@ int get_currPhase(Intersection I) {
 	return I->currPhase;
 }
 
-//when setting next phase need to change signals...?
+//when setting next phase need to change signals...? nope
 int set_next_phase(Intersection I) {
 	I->currPhase  = (I->currPhase + 1) % I->maxPhase;
 	/*

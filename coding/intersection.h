@@ -59,6 +59,8 @@ Signal **get_left_signals(Intersection I);
 
 int ***get_signalStatus(Intersection I);
 
+int ***get_leftSignalStatus(Intersection I);
+
 double *get_phaseLengths(Intersection I);
 
 LinkedList **get_laneQueues(Intersection I);

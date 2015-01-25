@@ -102,13 +102,19 @@ static int pick_origin();
 static int pick_destination( int origin );
 
 /* Event handler */
+static void IS1_initial(void *P);
+static void IS2_initial(void *P);
+static void IS3_initial(void *P);
+static void IS4_initial(void *P);
+static void IS5_initial(void *P);
+
 static void global_arrival( void *P );
 static void global_departure( void *P );
 
 static void IS_1_signal( void *P );
-/*
+
 static void IS_2_signal( void *P );
-static void IS_3_signal( void *P );
+/*static void IS_3_signal( void *P );
 static void IS_4_signal( void *P );
 static void IS_5_signal( void *P );
 */
@@ -171,7 +177,19 @@ void create_sim( double simEnd ) {
 	
 	// Create traffic signal events for each intersection
 	// .. //
-	
+	Event signal1 = init_event(0, NULL, INTERSECTION, IS1_INITIAL, IS1_initial);
+	Event signal2 = init_event(0, NULL, INTERSECTION, IS2_INITIAL, IS2_initial);
+/*	Event signal3 = init_event(0, NULL, INTERSECTION, IS3_INITIAL, IS3_initial);
+	Event signal4 = init_event(0, NULL, INTERSECTION, IS4_INITIAL, IS4_initial);
+	Event signal5 = init_event(0, NULL, INTERSECTION, IS5_INITIAL, IS5_initial);
+*/
+	schedule_event(signal1);
+	schedule_event(signal2);
+/*	schedule_event(signal3);
+	schedule_event(signal4);
+	schedule_event(signal5);
+*/
+
 	// Run simulation
 	run_sim( simEnd );
 	
@@ -251,6 +269,96 @@ static int pick_destination( int origin_id ) {
 |*                               GLOBAL ARRIVAL & DEPARTURE                                 *|
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
+
+static void IS1_initial(void *P) {
+	Event E = (Event) P;
+	Intersection I1 = create_intersection(1);
+	set_up_lanes(I1);
+	
+	set_object(E, I1);
+
+	int *phaseLengths = get_phaseLengths(I1);
+
+	//or do we need a 'newEvent' to set up the next signal switch?
+	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I1)]);
+	set_event_type(E, IS_1_SIGNAL);
+	set_callback(E, IS_1_signal);
+
+	schedule_event(E);
+}
+
+static void IS2_initial(void *P) {
+	Event E = (Event) P;
+	Intersection I2 = create_intersection(2);
+	set_up_lanes(I2);
+	
+	set_object(E, I2);
+
+	int *phaseLengths = get_phaseLengths(I2);
+
+	//or do we need a 'newEvent' to set up the next signal switch?
+	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I2)]);
+	set_event_type(E, IS_2_SIGNAL);
+	set_callback(E, IS_2_signal);
+
+	schedule_event(E);
+}
+
+/*
+static void IS3_initial(void *P) {
+	Event E = (Event) P;
+	Intersection I3 = create_intersection(3);
+	set_up_lanes(I3);
+	
+	set_object(E, I3);
+
+	int *phaseLengths = get_phaseLengths(I3);
+
+	//or do we need a 'newEvent' to set up the next signal switch?
+	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I3)]);
+	set_event_type(E, IS_3_SIGNAL);
+	set_callback(E, IS_3_signal);
+
+	schedule_event(E);
+}
+
+static void IS4_initial(void *P) {
+	Event E = (Event) P;
+	Intersection I4 = create_intersection(4);
+	set_up_lanes(I4);
+	
+	set_object(E, I4);
+
+	int *phaseLengths = get_phaseLengths(I4);
+
+	//or do we need a 'newEvent' to set up the next signal switch?
+	//set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I1)]);
+	//set_event_type(E, IS_1_SIGNAL);
+	//set_callback(E, IS_1_SIGNAL);
+
+	//schedule_event(E);
+
+	//no lights here..?
+
+}
+
+static void IS5_initial(void *P) {
+	Event E = (Event) P;
+	Intersection I5 = create_intersection(5);
+	set_up_lanes(I5);
+	
+	set_object(E, I5);
+
+	int *phaseLengths = get_phaseLengths(I5);
+
+	//or do we need a 'newEvent' to set up the next signal switch?
+	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I5)]);
+	set_event_type(E, IS_5_SIGNAL);
+	set_callback(E, IS_5_signal);
+
+	schedule_event(E);
+}
+*/
 
 // Event handler for a global vehicle arrival
 static void global_arrival( void* P ) {
@@ -339,6 +447,7 @@ static void global_departure( void* P ) {
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
 
+/* IGNORE_ME
 //intersection 1, north through lights
 static void IS_1_signal_NT( void* P ) {
 	Event E = (Event) P;
@@ -387,199 +496,92 @@ static void IS_1_signal_NT( void* P ) {
 	set_timestamp(E, get_sim_time() + s->times[curr]); //double check this logic
 	schedule_event(E);
 }
-
-//intersection 1, north through lights
-static void IS_1_signal_ET( void* P ) {
-	Event E = (Event) P;
-
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
-	Intersection I = get_object( E );
-	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 Signal East Through, Intersection Zone ID: %3d\n",
-		   get_sim_time(), get_inter_zoneID(I) );
-	
-	Signal **signals = get_through_signals(I);
-	int curr = 1;
-	int dir = EAST;
-
-	Signal *s = signals[curr];
-
-	Event newEvent;
-	LinkedList **laneQueues = get_laneQueues(I);
-	int *numLanes = get_numLanes(I);
-	
-
-	change_phase(I, curr); //change phase of north through signal
-	int curr_phase = get_curr_phase(I, curr);
-
-	if (curr_phase == 2) { //if we're at a red light, the left red needs to be set also
-		set_red(I, curr+4); //set the corresponding left to be red
-	}
-
-	int *phase = get_phase(I); //0-7 array for different phases of each traffic light
-
-	//schedule the first event in each lane to enter intersection
-	for (int i=0; i<numLanes[dir]; i++) { //for all lanes in this direction 
-		//how to differentiate between lanes going left etc
-		if (phase[curr]==GREEN || phase[curr]==YELLOW) {
-			if (get_list_counter(laneQueues[dir][i]) > 0) { //how to deal with left turns here
-				newEvent = peek_from_list(laneQueues[dir][i]);
-				set_timestamp(newEvent, get_sim_time());
-				set_event_type(newEvent, IS_1_N_ENTERING);
-				set_callback(newEvent, IS_1_N_entering);
-			}
-			schedule_event(newEvent);
-		}
-	}
-	set_timestamp(E, get_sim_time() + s->times[curr]); //double check this logic
-	schedule_event(E);
-}
-
-//intersection 1, north through lights
-static void IS_1_signal_ST( void* P ) {
-	Event E = (Event) P;
-
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
-	Intersection I = get_object( E );
-	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 Signal South Through, Intersection Zone ID: %3d\n",
-		   get_sim_time(), get_inter_zoneID(I) );
-	
-	Signal **signals = get_through_signals(I);
-	int curr = 2;
-	int dir = SOUTH;
-
-	Signal *s = signals[curr];
-
-	Event newEvent;
-	LinkedList **laneQueues = get_laneQueues(I);
-	int *numLanes = get_numLanes(I);
-	
-
-	change_phase(I, curr); //change phase of north through signal
-	int curr_phase = get_curr_phase(I, curr);
-
-	if (curr_phase == 2) { //if we're at a red light, the left red needs to be set also
-		set_red(I, curr+4); //set the corresponding left to be red
-	}
-
-	int *phase = get_phase(I); //0-7 array for different phases of each traffic light
-
-	//schedule the first event in each lane to enter intersection
-	for (int i=0; i<numLanes[dir]; i++) { //for all lanes in this direction 
-		//how to differentiate between lanes going left etc
-		if (phase[curr]==GREEN || phase[curr]==YELLOW) {
-			if (get_list_counter(laneQueues[dir][i]) > 0) {
-				newEvent = peek_from_list(laneQueues[dir][i]);
-				set_timestamp(newEvent, get_sim_time());
-				set_event_type(newEvent, IS_1_N_ENTERING);
-				set_callback(newEvent, IS_1_N_entering);
-			}
-			schedule_event(newEvent);
-		}
-	}
-	set_timestamp(E, get_sim_time() + s->times[curr]); //double check this logic
-	schedule_event(E);
-}
-
-//intersection 1, north through lights
-static void IS_1_signal_WT( void* P ) {
-	Event E = (Event) P;
-
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
-	Intersection I = get_object( E );
-	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 Signal West Through, Intersection Zone ID: %3d\n",
-		   get_sim_time(), get_inter_zoneID(I) );
-	
-	Signal **signals = get_through_signals(I);
-	int curr = 3;
-	int dir = WEST;
-
-	Signal *s = signals[curr];
-
-	Event newEvent;
-	LinkedList **laneQueues = get_laneQueues(I);
-	int *numLanes = get_numLanes(I);
-	
-
-	change_phase(I, curr); //change phase of north through signal
-	int curr_phase = get_curr_phase(I, curr);
-
-	if (curr_phase == 2) { //if we're at a red light, the left red needs to be set also
-		set_red(I, curr+4); //set the corresponding left to be red
-	}
-
-	int *phase = get_phase(I); //0-7 array for different phases of each traffic light
-
-	//schedule the first event in each lane to enter intersection
-	for (int i=0; i<numLanes[dir]; i++) { //for all lanes in this direction 
-		//how to differentiate between lanes going left etc
-		if (phase[curr]==GREEN || phase[curr]==YELLOW) {
-			if (get_list_counter(laneQueues[dir][i]) > 0) {
-				newEvent = peek_from_list(laneQueues[dir][i]);
-				set_timestamp(newEvent, get_sim_time());
-				set_event_type(newEvent, IS_1_N_ENTERING);
-				set_callback(newEvent, IS_1_N_entering);
-			}
-			schedule_event(newEvent);
-		}
-	}
-	set_timestamp(E, get_sim_time() + s->times[curr]); //double check this logic
-	schedule_event(E);
-}
-
-
-//intersection 1, north left lights
-static void IS_1_signal_NL( void* P ) {
-	Event E = (Event) P;
-
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
-	Intersection I = get_object( E );
-	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 Signal North Left, Intersection Zone ID: %3d\n",
-		   get_sim_time(), get_inter_zoneID(I) );
-	
-	Signal **signals = get_left_signals(I);
-
-	int curr = 4;
-	int dir = NORTH;
-	//int ***signalStatus = get_signalStatus(I);
-	//double *phaseLengths = get_phaseLengths(I);
-
-	Signal *s = signals[curr];
-
-	Event newEvent;
-	LinkedList **laneQueues = get_laneQueues(I);
-	//int maxPhase = get_maxPhase(I);
-	int *numLanes = get_numLanes(I);
-
-	change_phase(I, curr); //change phase of north through signal
-	int *phase = get_phase(I); //0-7 array for different phases of each traffic light
-
-	for (int i=0; i<numLanes[dir]; i++) { //for all lanes in this direction 
-		//how to differentiate between lanes going left etc
-		if (phase[curr]==GREEN || phase[curr]==YELLOW) {
-			if (get_list_counter(laneQueues[dir][i]) > 0) {
-				newEvent = peek_from_list(laneQueues[dir][i]);
-				set_timestamp(newEvent, get_sim_time());
-				set_event_type(newEvent, IS_1_N_ENTERING);
-				set_callback(newEvent, IS_1_N_entering);
-			}
-			schedule_event(newEvent);
-		}
-	}
-	set_timestamp(E, get_sim_time() + s->times[curr]); //double check this logic
-	schedule_event(E);
-
-}
-
+*/
 
 static void IS_1_signal( void* P ) {
+	Event E = (Event) P;
+	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
+	Intersection I = get_object( E );
+	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
+	
+	printf("%6.2f, IS 1 Signal, Intersection Zone ID: %3d\n",
+		   get_sim_time(), get_inter_zoneID(I) );
+	
+	int ***signalStatus = get_signalStatus(I);
+	int ***leftSignalStatus = get_leftSignalStatus(I);
+	double *phaseLengths = get_phaseLengths(I);
+
+	Event newEvent;
+	LinkedList **laneQueues = get_laneQueues(I);
+	int maxPhase = get_maxPhase(I);
+	int *numLanes = get_numLanes(I);
+	
+
+	set_next_phase(I); //update to next phase & change appropriate signals
+	int curr_phase = get_currPhase(I);
+
+	//left turns..?
+	//IMPORTANT: left turn indexing 
+
+	//hmmmmmm
+
+	for (int i=0; i<4; i++) {
+		for (int j=0; j<numLanes[i]; j++) {
+			if (signalStatus[i][j][curr_phase]==GREEN || signalStatus[i][j][curr_phase]==YELLOW) {
+				if (get_list_counter(laneQueues[i][j]) > 0) {
+					newEvent = peek_from_list(laneQueues[i][j]);
+					set_timestamp(newEvent, get_sim_time());
+					if (i==NORTH && (j>0)) {
+						set_event_type(newEvent, IS_1_N_ENTERING);
+						set_callback(newEvent, IS_1_N_entering);
+					} else if (i==EAST && (j>0)) {
+						//TODO: left turn should only enter intersection if 
+						//west lane 1 cars are not going straight
+						set_event_type(newEvent, IS_1_E_ENTERING);
+						set_callback(newEvent, IS_1_E_entering);
+					} else if (i==SOUTH && (j>0)) {
+						//TODO: left turn should only enter if north lane 1/2
+						//cars are not going straight
+						set_event_type(newEvent, IS_1_S_ENTERING);
+						set_callback(newEvent, IS_1_S_entering);
+					} else if (i==WEST && (j>0)) {
+						//TODO: left turn should only enter if east lane 1 
+						//is not going straight
+						set_event_type(newEvent, IS_1_W_ENTERING);
+						set_callback(newEvent, IS_1_W_entering);
+					} else {exit(-1);}
+				} else if (leftSignalStatus[i][j][curr_phase]==GREEN || leftSignalStatus[i][j][curr_phase]==YELLOW) {
+					newEvent = peek_from_list(laneQueues[i][j]);//j==0
+					set_timestamp(newEvent, get_sim_time());
+					if (i==NORTH && (j==0)) {
+						set_event_type(newEvent, IS_1_N_ENTERING);
+						set_callback(newEvent, IS_1_N_entering);
+					} else if (i==EAST && (j==0)) {
+						//TODO: left turn should only enter intersection if 
+						//west lane 1 cars are not going straight
+						set_event_type(newEvent, IS_1_E_ENTERING);
+						set_callback(newEvent, IS_1_E_entering);
+					} else if (i==SOUTH && (j==0)) {
+						//TODO: left turn should only enter if north lane 1/2
+						//cars are not going straight
+						set_event_type(newEvent, IS_1_S_ENTERING);
+						set_callback(newEvent, IS_1_S_entering);
+					} else if (i==WEST && (j==0)) {
+						//TODO: left turn should only enter if east lane 1 
+						//is not going straight
+						set_event_type(newEvent, IS_1_W_ENTERING);
+						set_callback(newEvent, IS_1_W_entering);
+					} else {exit(-1);}
+				}
+				schedule_event(newEvent);
+			}
+		} 
+	}
+	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I)]);
+	schedule_event(E);
+}
+
+static void IS_2_signal( void* P ) {
 	Event E = (Event) P;
 	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
 	Intersection I = get_object( E );
@@ -612,12 +614,18 @@ static void IS_1_signal( void* P ) {
 							set_event_type(newEvent, IS_1_N_ENTERING);
 							set_callback(newEvent, IS_1_N_entering);
 						} else if (i==EAST) {
+							//TODO: left turn should only enter intersection if 
+							//west lane 1 cars are not going straight
 							set_event_type(newEvent, IS_1_E_ENTERING);
 							set_callback(newEvent, IS_1_E_entering);
 						} else if (i==SOUTH) {
+							//TODO: left turn should only enter if north lane 1/2
+							//cars are not going straight
 							set_event_type(newEvent, IS_1_S_ENTERING);
 							set_callback(newEvent, IS_1_S_entering);
 						} else if (i==WEST) {
+							//TODO: left turn should only enter if east lane 1 
+							//is not going straight
 							set_event_type(newEvent, IS_1_W_ENTERING);
 							set_callback(newEvent, IS_1_W_entering);
 						} else {exit(-1);}
