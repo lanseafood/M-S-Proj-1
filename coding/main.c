@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 	
 	// Overall simulation time in seconds
 	double hours   = 0;
-	double minutes = 1;
+	double minutes = 5;
 	double seconds = 0;
 	double simEnd  = hours*3600 + minutes*60 + seconds;
 	

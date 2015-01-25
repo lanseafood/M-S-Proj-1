@@ -538,7 +538,7 @@ static void IS_1_signal( void* P ) {
 	set_next_phase(I); //update to next phase & change appropriate signals
 	int curr_phase = get_currPhase(I);
 
-	//printf("currphase: %d\n", curr_phase);
+	printf("currphase: %d\n", curr_phase);
 	//left turns..?
 	//IMPORTANT: left turn indexing 
 
@@ -549,9 +549,10 @@ static void IS_1_signal( void* P ) {
 		for (int j=0; j<numLanes[i]; j++) {
 			//printf("i: %d, j: %d, ss=%d\n", i, j, signalStatus[i][j][curr_phase]);
 			//printf("lss=%d\n", leftSignalStatus[i][j][curr_phase]);
-			if (signalStatus[i][j][curr_phase]==GREEN || signalStatus[i][j][curr_phase]==YELLOW) {
+			if ((signalStatus[i][j][curr_phase]==GREEN || signalStatus[i][j][curr_phase]==YELLOW) && (j>0)) {
 				//printf("x: %d\n", get_list_counter(laneQueues[i][j]));
 				//printf("y: %d\n", get_lane_flag(I, i, j)); 
+				//printf("straight green, lane:%d\n", j);
 				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
 					newEvent = peek_from_list(laneQueues[i][j]);
 					set_timestamp(newEvent, get_sim_time());
@@ -580,8 +581,9 @@ static void IS_1_signal( void* P ) {
 					} else {
 						exit(-1);
 					}
+					schedule_event(newEvent);
 				} 
-			} else if (leftSignalStatus[i][j][curr_phase]==GREEN || leftSignalStatus[i][j][curr_phase]==YELLOW) {
+			} else if ((leftSignalStatus[i][j][curr_phase]==GREEN || leftSignalStatus[i][j][curr_phase]==YELLOW) && j==0) {
 				//printf("x2: %d\n", get_list_counter(laneQueues[i][j]));
 				//printf("y2: %d\n", get_lane_flag(I, i, j)); 
 				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
@@ -612,11 +614,12 @@ static void IS_1_signal( void* P ) {
 					} else {
 						exit(-1);
 					}
+					schedule_event(newEvent);
 				}
 			}
 			if (newEvent != NULL) {
-				printf("scheduling\n");
-				schedule_event(newEvent);
+				//printf("scheduling\n");
+				//schedule_event(newEvent);
 			}
 		}
 		 
@@ -868,18 +871,18 @@ static void IS_1_S_arrival( void* P ) {
 		   && get_lane_flag( IS_1, SOUTH, newLane ) == 0 )
 		{
 			printf("scheduling, lane: %d\n", newLane);
-			printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
+			//printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
 			add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
-			printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
+			//printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
 			
 			Event x = (Event) peek_from_list( get_lane_queue( IS_1, SOUTH, newLane ) );
 			if (x==NULL) {
 				printf("x is null\n");
 			}
-			printf("timestamp x: %lf\n", get_timestamp(x));
-			printf("obj type x: %d\n", get_object_type(x));
-			printf("event type x: %d, \n", get_event_type(x));
-			printf("event type E: %d\n", get_event_type(E));
+			//printf("timestamp x: %lf\n", get_timestamp(x));
+			//printf("obj type x: %d\n", get_object_type(x));
+			//printf("event type x: %d, \n", get_event_type(x));
+			//printf("event type E: %d\n", get_event_type(E));
 			Vehicle veh = get_object(x);
 			if (veh==NULL) {
 				printf("vehicle is null\n");
@@ -1037,8 +1040,8 @@ static void IS_1_S_entering( void* P ) {
 		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	int laneID = get_laneID( V );
-	printf("laneID: %d\n", laneID);
-	printf("num2: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, laneID)));
+	//printf("laneID: %d\n", laneID);
+	//printf("num2: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, laneID)));
 	// Check if this event is first in the queue
 	Event test = peek_from_list( get_lane_queue( IS_1, SOUTH, laneID ) );
 	//printf("obj: %d")
