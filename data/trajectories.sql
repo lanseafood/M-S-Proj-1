@@ -1,4 +1,4 @@
-/*
+/**
 *	Created by Stefan Henneking on 01/12/15
 *	GTid: 903085706
 *
@@ -25,8 +25,12 @@ create view if not exists vehicles as
 
 	select 	 distinct t.vehicle_id,
 			 t.org_zone,
-			 t.dest_zone
+			 t.dest_zone,
+			 t.veh_len
 	from	 trajectories t
+	where 	 t.org_zone in (101, 102, 103, 106, 112, 113, 114, 115, 121, 122, 123)
+			 and t.dest_zone in (201, 202, 203, 206, 212, 213, 214, 215, 221, 222, 223)
+			 and t.dest_zone != ( t.org_zone + 100 )
 ;
 
 select '';
@@ -39,6 +43,23 @@ select '';
 select 	count(t.vehicle_id) as "Number of Rows",
 		count(distinct t.vehicle_id) as "Number of Vehicles"
 from trajectories t
+;
+
+.headers off
+select'';
+.headers on
+
+-- Output
+select 	count(t.vehicle_id) as "Number of Vehicles (filtered origin and destination zones)"
+from vehicles t
+;
+
+.headers off
+select'';
+.headers on
+
+select avg(veh_len)
+from vehicles
 ;
 
 .headers off
@@ -61,6 +82,29 @@ select	v.dest_zone as "Destination Zone",
 		round(100.0*count(v.vehicle_id) / ( select count(vc.vehicle_id) from vehicles vc ), 2) || '%' as "Probability"
 from vehicles v
 group by v.dest_zone
+;
+
+.headers off
+select'';
+.headers on
+
+select 	a."Origin Zone" as "Origin Zone", 
+		a."Destination Zone" as "Destination Zone",
+		a."Vehicles" as "Vehicles",
+		round(100.0 * a."Vehicles" / 
+						( 	select count(vehicle_id) 
+						 	from vehicles vc_b 
+						 	where vc_b.org_zone = a."Origin Zone" 
+						 	group by vc_b.org_zone 
+						)
+		, 2) || '%' as "Probability per Origin"
+from	( 	select 	vc_a.org_zone as "Origin Zone",
+					vc_a.dest_zone as "Destination Zone",
+					count(vc_a.vehicle_id) as "Vehicles"
+			from 	vehicles vc_a
+			group by vc_a.org_zone, vc_a.dest_zone
+		) a
+order by a."Origin Zone", a."Destination Zone"
 ;
 
 -- Clean Up
