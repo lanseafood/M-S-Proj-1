@@ -17,14 +17,15 @@
 #include "section.h"
 #include "simApplication.h"
 
-#define IAT  5.0f    // Global Inter Arrival Time (mean value for exponential distribution)
+#define IAT 10.0f    // Global Inter Arrival Time (mean value for exponential distribution)
 #define VEL 51.0f    // Maximum Vehicle Speed in ft/sec (35mph ~ 51ft/sec)
 #define ACC 10.0f    // Vehicle Acceleration in ft/sec^2
 #define VHL 15.0f    // Vehicle length
 #define SDD 30.0f    // Safety Distance in ft while driving
-#define SDT ( ( SDD + VHL ) / VEL ) // Safety Distance in sec while driving
 #define SDQ  5.0f    // Safety Distance in ft while queueing up
 #define SUD  1.0f    // Start-up delay / lost time (first car: delay when traffic light switches to green)
+
+#define SDT ( ( SDD + VHL ) / VEL ) // Safety Distance in sec while driving
 
 // Pointer declaration: compare function for priority queue
 int (*compare_to)( void*, void* );
@@ -49,11 +50,13 @@ static int destinations[11] =
 
 // Origin and destination probabilities
 static double p_origins[11] =
-{ 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+//-101- -102- -103- -106- -112- -113- -114- -115- -121- -122- -123-
+{ 0.50, 0.25, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.25 };
 static double p_destinations[11][11] =
 {
+//    -201- -202- -203- -206- -212- -213- -214- -215- -221- -222- -223-
 	{ 0.00, 0.10, 0.00, 0.00, 0.00, 0.00, 0.80, 0.00, 0.00, 0.00, 0.10 }, // origin 101
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 102
+	{ 0.10, 0.00, 0.00, 0.00, 0.00, 0.00, 0.80, 0.00, 0.00, 0.00, 0.10 }, // origin 102
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 103
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 106
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 112
@@ -64,6 +67,42 @@ static double p_destinations[11][11] =
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 122
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }  // origin 123
 };
+
+/*
+--------------------------------------------------------------------------------------
+=================================== NGSIM DATA SET ===================================
+--------------------------------------------------------------------------------------
+Traffic Peachtree St. NE, 10th-14th: 4.00pm-4.15pm
+Original Trajectory Data: 753 Vehicles
+Filtered Trajectory Data: 667 Vehicles
+  > Origin and Destination Zones restricted to this model (driveways excluded)
+  > Origin Zone must be different from Destination Done (no U-Turns)
+--------------------------------------------------------------------------------------
+[Original Data]: 
+Average Inter-Arrival Time: 0.83 sec
+Average Vehicle Length    : 16.3 ft
+[Filtered Data]:
+static double p_origins[11] =
+//  -101-   -102-   -103-   -106-   -112-   -113-   -114-   -115-   -121-   -122-   -123-
+{ 0.1874, 0.0495, 0.0135, 0,0000, 0.0195, 0.0036, 0.3793, 0.1559, 0.0150, 0.0735, 0.0705 };
+static double p_destinations[11][11] =
+{
+//     -201-   -202-   -203-   -206-   -212-   -213-   -214-   -215-   -221-   -222-   -223-
+	{ 0.0000, 0.0960, 0.0000, 0.0160, 0.0080, 0.0160, 0.5360, 0.0640, 0.0400, 0.0240, 0.2000 }, // origin 101
+	{ 0.2424, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.5455, 0.0909, 0.0303, 0.0303, 0.0303 }, // origin 102
+	{ 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.1111, 0.0000, 0.0000, 0.7778, 0.1111 }, // origin 103
+	{ 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 }, // origin 106
+	{ 0.0769, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.6923, 0.1538, 0.0769, 0.0000, 0.0000 }, // origin 112
+	{ 0.0417, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.9583, 0.0000, 0.0000, 0.0000, 0.0000 }, // origin 113
+	{ 0.2885, 0.0672, 0.0040, 0.0237, 0.0949, 0.2846, 0.0000, 0.1700, 0.0119, 0.0119, 0.0435 }, // origin 114
+	{ 0.2692, 0.0385, 0.0192, 0.0192, 0.0577, 0.0096, 0.4423, 0.0000, 0.0288, 0.0288, 0.0865 }, // origin 115
+	{ 0.2000, 0.3000, 0.1000, 0.0000, 0.0000, 0.0000, 0.2000, 0.0000, 0.0000, 0.1000, 0.1000 }, // origin 121
+	{ 0.2653, 0.4490, 0.0816, 0.0000, 0.0000, 0.0000, 0.0204, 0.0204, 0.0000, 0.0000, 0.1633 }, // origin 122
+	{ 0.4894, 0.0000, 0.0426, 0.0000, 0.0000, 0.0213, 0.3617, 0.0426, 0.0000, 0.0426, 0.0000 }  // origin 123
+};
+--------------------------------------------------------------------------------------
+======================================================================================
+*/
 
 // Auxiliary function for computing velocity, distance, time while accelerating
 static inline double calc_velocity( double v_cur, double t ) {
@@ -98,23 +137,22 @@ static double urand();
 static double randexp();
 
 /* Auxiliary functions */
+static int pick_signal_phase( Intersection I );
 static int pick_origin();
 static int pick_destination( int origin );
 
-/* Event handler */
-static void IS1_initial(void *P);
-static void IS2_initial(void *P);
-static void IS3_initial(void *P);
-static void IS4_initial(void *P);
-static void IS5_initial(void *P);
+/* Traffic signal initialization */
+static void rand_signal_init();
+static void sync_signal_init();
 
+/* Event handler */
 static void global_arrival( void *P );
 static void global_departure( void *P );
 
 static void IS_1_signal( void *P );
-
 static void IS_2_signal( void *P );
-/*static void IS_3_signal( void *P );
+/*
+static void IS_3_signal( void *P );
 static void IS_4_signal( void *P );
 static void IS_5_signal( void *P );
 */
@@ -139,6 +177,9 @@ static void IS_1_E_departure( void* P );
 static void IS_1_S_departure( void* P );
 static void IS_1_W_departure( void* P );
 
+static void (*IS_1_ENTER[4])(void *)    = { IS_1_N_entering, IS_1_E_entering, IS_1_S_entering, IS_1_W_entering };
+static TypeOfEvent IS_1_ENTER_EVENTS[4] = { IS_1_N_ENTERING, IS_1_E_ENTERING, IS_1_S_ENTERING, IS_1_W_ENTERING };
+
 /* --------------------------------------------------------------------------------------- */
 /* ======================================================================================= */
 
@@ -147,20 +188,20 @@ void create_sim( double simEnd ) {
 	// Set compare function pointer for priority queue
 	compare_to = compare_events;
 	
-	// Initialize Road Network
 	// Create Intersections
 	IS_1 = create_intersection( 1 );
-	IS_2 = create_intersection( 2 );
-	IS_3 = create_intersection( 3 );
-	IS_4 = create_intersection( 4 );
-	IS_5 = create_intersection( 5 );
+	//IS_2 = create_intersection( 2 );
+	//IS_3 = create_intersection( 3 );
+	//IS_4 = create_intersection( 4 );
+	//IS_5 = create_intersection( 5 );
+	
 	// Create Sections
-	S_1 = create_section( 1 );
-	S_1 = create_section( 2 );
-	S_1 = create_section( 3 );
-	S_1 = create_section( 4 );
-	S_1 = create_section( 5 );
-	S_1 = create_section( 6 );
+	S_1 = create_section( 1, VHL, SDQ );
+	S_1 = create_section( 2, VHL, SDQ );
+	S_1 = create_section( 3, VHL, SDQ );
+	S_1 = create_section( 4, VHL, SDQ );
+	S_1 = create_section( 5, VHL, SDQ );
+	S_1 = create_section( 6, VHL, SDQ );
 	
 	// Initialize state variables
 	arrivals = 0;
@@ -171,36 +212,28 @@ void create_sim( double simEnd ) {
 	// Call engine setup
 	set_up_sim();
 
-	Event inter1 = init_event(0, IS_1, INTERSECTION, IS_1_SIGNAL, IS_1_signal); 
-	schedule_event(inter1);
-
 	// Initialize and schedule first event (global arrival)
 	Event firstArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
 	schedule_event( firstArrival );
 	
-	// Create traffic signal events for each intersection
-	// .. //
-//	Event signal1 = init_event(0, NULL, INTERSECTION, IS1_INITIAL, IS1_initial);
-//	Event signal2 = init_event(0, NULL, INTERSECTION, IS2_INITIAL, IS2_initial);
-/*	Event signal3 = init_event(0, NULL, INTERSECTION, IS3_INITIAL, IS3_initial);
-	Event signal4 = init_event(0, NULL, INTERSECTION, IS4_INITIAL, IS4_initial);
-	Event signal5 = init_event(0, NULL, INTERSECTION, IS5_INITIAL, IS5_initial);
-*/
-//	schedule_event(signal1);
-//	schedule_event(signal2);
-/*	schedule_event(signal3);
-	schedule_event(signal4);
-	schedule_event(signal5);
-*/
-
+	// Initialize signal events
+	printf( "\n---------------------------------------------------------\n");
+	rand_signal_init();
+	//sync_signal_init();
+	printf( "---------------------------------------------------------\n");
+	
 	// Run simulation
 	run_sim( simEnd );
 	
-	// Calculate output values
-	// .. //
-	
 	// Print stats
-	printf( "\nMean Inter Arrival Time: %5.2f ( rate = %6.3f )\n", (double)IAT, (double)(1.0/IAT) );
+	printf( "\n---------------------------------------------------------\n");
+	printf( "Total Simulation Time: %d min, %d sec\n", (int)simEnd/60, (int)simEnd%60 );
+	printf( "Mean Inter Arrival Time: %5.2f ( rate = %6.3f )\n", (double)IAT, (double)(1.0/IAT) );
+	printf( "Global Arrivals  : %4d Vehicles\n", arrivals );
+	printf( "Global Departures: %4d Vehicles\n", departures );
+	printf( "Average Travel Time: %6.2f sec\n", totalTravelTime/departures );
+	printf( "Average Wait   Time: %6.2f sec\n", totalWaitTime/departures );
+	printf( "---------------------------------------------------------\n");
 }
 
 // Initialize new event (without scheduling it)
@@ -234,6 +267,17 @@ static double randexp() {
 	return -IAT*( log( 1.0 - urand() ) );
 }
 
+// Pick random traffic signal phase
+static int pick_signal_phase( Intersection I ) {
+	double r = urand() * get_totalPhaseLength( I );
+	double *p = get_phaseLengths( I );
+	double i = p[0]; int j = 0;
+	while( r > i && j < get_maxPhase( I ) ) {
+		j++;
+		i += p[j];
+	}
+	return j;
+}
 
 // Pick vehicle origin zone
 static int pick_origin() {
@@ -267,108 +311,41 @@ static int pick_destination( int origin_id ) {
 	return destination_id;
 }
 
+static void rand_signal_init() {
+	printf("Random Signal Initialization\n");
+	// IS 1
+	int randPhase = pick_signal_phase( IS_1 );
+	set_currPhase( IS_1, randPhase );
+	double nextSignalSwitch = urand() * (get_phaseLengths(IS_1))[randPhase];
+	printf( "  - Intersection 1; phase: %2d, next signal event: %5.2f\n", randPhase, nextSignalSwitch );
+	Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_1_SIGNAL, IS_1_signal );
+	schedule_event( Inter_1 );
+	// IS 2
+	/*
+	randPhase = pick_signal_phase( IS_2 );
+	set_currPhase( IS_2, randPhase );
+	nextSignalSwitch = urand() * (get_phaseLengths(IS_2))[randPhase];
+	printf( "  - Intersection 2; phase: %2d, next signal event: %5.2f\n", randPhase, nextSignalSwitch );
+	Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_2_SIGNAL, IS_2_signal );
+	schedule_event( Inter_2 );
+	*/
+}
+
+static void sync_signal_init() {
+	printf("Synchronized Signal Initialization\n");
+	printf( "  - Intersection 1\n" );
+	printf( "  - Intersection 2\n" );
+	printf( "  - Intersection 3\n" );
+	printf( "  - Intersection 4\n" );
+	printf( "  - Intersection 5\n" );
+	exit(0);
+}
+
 /* ======================================================================================== *\
 |*                                                                                          *|
 |*                               GLOBAL ARRIVAL & DEPARTURE                                 *|
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
-
-static void IS1_initial(void *P) {
-	Event E = (Event) P;
-
-	printf("%6.2f, IS 1 init\n",
-		   get_sim_time());
-	
-
-	Intersection I1 = create_intersection(1);
-	
-	set_object(E, I1);
-
-	double *phaseLengths = get_phaseLengths(I1);
-
-	//or do we need a 'newEvent' to set up the next signal switch?
-	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I1)]);
-	set_event_type(E, IS_1_SIGNAL);
-	set_callback(E, IS_1_signal);
-
-	schedule_event(E);
-}
-
-static void IS2_initial(void *P) {
-	Event E = (Event) P;
-	
-	printf("%6.2f, IS 2 init\n",
-		   get_sim_time());
-
-	Intersection I2 = create_intersection(2);
-	
-	set_object(E, I2);
-
-	double *phaseLengths = get_phaseLengths(I2);
-
-	//or do we need a 'newEvent' to set up the next signal switch?
-	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I2)]);
-	set_event_type(E, IS_2_SIGNAL);
-	set_callback(E, IS_2_signal);
-
-	schedule_event(E);
-}
-
-/*
-static void IS3_initial(void *P) {
-	Event E = (Event) P;
-	Intersection I3 = create_intersection(3);
-	set_up_lanes(I3);
-	
-	set_object(E, I3);
-
-	int *phaseLengths = get_phaseLengths(I3);
-
-	//or do we need a 'newEvent' to set up the next signal switch?
-	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I3)]);
-	set_event_type(E, IS_3_SIGNAL);
-	set_callback(E, IS_3_signal);
-
-	schedule_event(E);
-}
-
-static void IS4_initial(void *P) {
-	Event E = (Event) P;
-	Intersection I4 = create_intersection(4);
-	set_up_lanes(I4);
-	
-	set_object(E, I4);
-
-	int *phaseLengths = get_phaseLengths(I4);
-
-	//or do we need a 'newEvent' to set up the next signal switch?
-	//set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I1)]);
-	//set_event_type(E, IS_1_SIGNAL);
-	//set_callback(E, IS_1_SIGNAL);
-
-	//schedule_event(E);
-
-	//no lights here..?
-
-}
-
-static void IS5_initial(void *P) {
-	Event E = (Event) P;
-	Intersection I5 = create_intersection(5);
-	set_up_lanes(I5);
-	
-	set_object(E, I5);
-
-	int *phaseLengths = get_phaseLengths(I5);
-
-	//or do we need a 'newEvent' to set up the next signal switch?
-	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I5)]);
-	set_event_type(E, IS_5_SIGNAL);
-	set_callback(E, IS_5_signal);
-
-	schedule_event(E);
-}
-*/
 
 // Event handler for a global vehicle arrival
 static void global_arrival( void* P ) {
@@ -439,7 +416,7 @@ static void global_departure( void* P ) {
 	Vehicle V = get_object( E );
 	if( V == NULL ) { fprintf(stderr,"Error from global_departure(): V is NULL\n"); exit(1); }
 	
-	printf("%6.2f, Global Departure      , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
+	printf("%6.2f, Global Departure    , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
 		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	// Change state variables
@@ -453,247 +430,48 @@ static void global_departure( void* P ) {
 
 /* ======================================================================================== *\
 |*                                                                                          *|
-|*                            INTERSECTIONS : TRAFFIC SIGNALS                               *|
+|*                         INTERSECTIONS : TRAFFIC SIGNAL EVENTS                            *|
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
-
-/* IGNORE_ME
-//intersection 1, north through lights
-static void IS_1_signal_NT( void* P ) {
-	Event E = (Event) P;
-
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
-	Intersection I = get_object( E );
-	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 Signal North Through, Intersection Zone ID: %3d\n",
-		   get_sim_time(), get_inter_zoneID(I) );
-	
-	Signal **signals = get_through_signals(I);
-	int curr = 0;
-	int dir = NORTH;
-
-	Signal *s = signals[curr];
-
-	Event newEvent;
-	LinkedList **laneQueues = get_laneQueues(I);
-	int *numLanes = get_numLanes(I);
-	
-
-	change_phase(I, curr); //change phase of north through signal
-	int curr_phase = get_curr_phase(I, curr);
-
-	if (curr_phase == 2) { //if we're at a red light, the left red needs to be set also
-		set_red(I, curr+4); //set the corresponding left to be red
-	}
-
-	int *phase = get_phase(I); //0-7 array for different phases of each traffic light
-	//CHECK phase[curr] should equal curr_phase at this point?
-
-	//schedule the first event in each lane to enter intersection
-	for (int i=0; i<numLanes[dir]; i++) { //for all lanes in this direction 
-		//how to differentiate between lanes going left etc
-		if (phase[curr]==GREEN || phase[curr]==YELLOW) {
-			if (get_list_counter(laneQueues[dir][i]) > 0) {
-				newEvent = peek_from_list(laneQueues[dir][i]);
-				set_timestamp(newEvent, get_sim_time());
-				set_event_type(newEvent, IS_1_N_ENTERING);
-				set_callback(newEvent, IS_1_N_entering);
-			}
-			schedule_event(newEvent);
-		}
-	}
-	set_timestamp(E, get_sim_time() + s->times[curr]); //double check this logic
-	schedule_event(E);
-}
-*/
 
 static void IS_1_signal( void* P ) {
 	Event E = (Event) P;
 	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
 	Intersection I = get_object( E );
 	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 Signal, Intersection Zone ID: %3d\n",
-		   get_sim_time(), get_inter_zoneID(I) );
-	
-	//printf("a\n");
+	printf("%6.2f, Intersection 1 Signal Event;  ", get_sim_time() );
 
+	// Get intersection fields
 	int ***signalStatus = get_signalStatus(I);
-	//printf("b\n");
-
-	int ***leftSignalStatus = get_leftSignalStatus(I);
-	//printf("blah %d\n", leftSignalStatus[0][0][0]);
-	//printf("c\n");
-
 	double *phaseLengths = get_phaseLengths(I);
-	//printf("d\n");
-
-	Event newEvent = NULL;
-	LinkedList **laneQueues = get_laneQueues(I);
 	int maxPhase = get_maxPhase(I);
 	int *numLanes = get_numLanes(I);
+	LinkedList **laneQueues = get_laneQueues(I);
 	
-	//printf("e\n");
-	set_next_phase(I); //update to next phase & change appropriate signals
+	// Update to next phase & change appropriate signals
+	printf("old phase: %d, ", get_currPhase(I));
+	set_next_phase(I);
 	int curr_phase = get_currPhase(I);
+	printf("new phase: %d, phase length: %5.2f\n", curr_phase, phaseLengths[curr_phase]);
+	// Schedule next signal event
+	set_timestamp(E, get_sim_time() + phaseLengths[curr_phase]);
+	schedule_event(E);
 
-	printf("currphase: %d\n", curr_phase);
-	//left turns..?
-	//IMPORTANT: left turn indexing 
-
-	//hmmmmmm
-
-	//printf("f\n");
-	for (int i=0; i<4; i++) {
-		for (int j=0; j<numLanes[i]; j++) {
-			//printf("i: %d, j: %d, ss=%d\n", i, j, signalStatus[i][j][curr_phase]);
-			//printf("lss=%d\n", leftSignalStatus[i][j][curr_phase]);
-			if ((signalStatus[i][j][curr_phase]==GREEN || signalStatus[i][j][curr_phase]==YELLOW) && (j>0)) {
-				//printf("x: %d\n", get_list_counter(laneQueues[i][j]));
-				//printf("y: %d\n", get_lane_flag(I, i, j)); 
-				//printf("straight green, lane:%d\n", j);
-				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
+	// Schedule entering events for vehicles
+	Event newEvent = NULL;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < numLanes[i]; j++) {
+			if ( signalStatus[i][j][curr_phase] == GREEN ) {
+				if ( get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j) == 0 ) {
 					newEvent = peek_from_list(laneQueues[i][j]);
 					set_timestamp(newEvent, get_sim_time());
-					Vehicle v = get_object(newEvent);
-					//printf("j: %d, vehicle laneID: %d\n", j, get_laneID(v));
-					//printf("j: %d, vehicle laneID: %d\n", j, get_laneID(get_object(newEvent)));
-					if (i==NORTH && (j>0)) {
-						set_event_type(newEvent, IS_1_N_ENTERING);
-						set_callback(newEvent, IS_1_N_entering);
-					} else if (i==EAST && (j>0)) {
-						//TODO: left turn should only enter intersection if 
-						//west lane 1 cars are not going straight
-						set_event_type(newEvent, IS_1_E_ENTERING);
-						set_callback(newEvent, IS_1_E_entering);
-					} else if (i==SOUTH && (j>0)) {
-						printf("south through\n");
-						//TODO: left turn should only enter if north lane 1/2
-						//cars are not going straight
-						set_event_type(newEvent, IS_1_S_ENTERING);
-						set_callback(newEvent, IS_1_S_entering);
-					} else if (i==WEST && (j>0)) {
-						//TODO: left turn should only enter if east lane 1 
-						//is not going straight
-						set_event_type(newEvent, IS_1_W_ENTERING);
-						set_callback(newEvent, IS_1_W_entering);
-					} else {
-						exit(-1);
-					}
-					schedule_event(newEvent);
-				} 
-			} else if ((leftSignalStatus[i][j][curr_phase]==GREEN || leftSignalStatus[i][j][curr_phase]==YELLOW) && j==0) {
-				//printf("x2: %d\n", get_list_counter(laneQueues[i][j]));
-				//printf("y2: %d\n", get_lane_flag(I, i, j)); 
-				if (get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j)==0) {
-					newEvent = peek_from_list(laneQueues[i][j]);//j==0
-					set_timestamp(newEvent, get_sim_time());
-					Vehicle v = get_object(newEvent);
-					printf("j: %d, vehicle laneID: %d\n", j, get_laneID(v));
-					if (i==NORTH && (j==0)) {
-						set_event_type(newEvent, IS_1_N_ENTERING);
-						set_callback(newEvent, IS_1_N_entering);
-					} else if (i==EAST && (j==0)) {
-						printf("hi\n");
-						//TODO: left turn should only enter intersection if 
-						//west lane 1 cars are not going straight
-						set_event_type(newEvent, IS_1_E_ENTERING);
-						set_callback(newEvent, IS_1_E_entering);
-					} else if (i==SOUTH && (j==0)) {
-						printf("south left\n");
-						//TODO: left turn should only enter if north lane 1/2
-						//cars are not going straight
-						set_event_type(newEvent, IS_1_S_ENTERING);
-						set_callback(newEvent, IS_1_S_entering);
-					} else if (i==WEST && (j==0)) {
-						//TODO: left turn should only enter if east lane 1 
-						//is not going straight
-						set_event_type(newEvent, IS_1_W_ENTERING);
-						set_callback(newEvent, IS_1_W_entering);
-					} else {
-						exit(-1);
-					}
-					schedule_event(newEvent);
+					
+					set_event_type(newEvent, IS_1_ENTER_EVENTS[i]);
+					set_callback  (newEvent, IS_1_ENTER       [i]);
 				}
 			}
-			if (newEvent != NULL) {
-				//printf("scheduling\n");
-				//schedule_event(newEvent);
-			}
-		}
-		 
-	}
-	printf("set next signal event \n");
-	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I)]);
-	schedule_event(E);
-}
-
-static void IS_2_signal( void* P ) {
-	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
-	Intersection I = get_object( E );
-	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 2 Signal, Intersection Zone ID: %3d\n",
-		   get_sim_time(), get_inter_zoneID(I) );
-	
-	int ***signalStatus = get_signalStatus(I);
-	double *phaseLengths = get_phaseLengths(I);
-
-	Event newEvent;
-	LinkedList **laneQueues = get_laneQueues(I);
-	int maxPhase = get_maxPhase(I);
-	int *numLanes = get_numLanes(I);
-
-	set_next_phase(I); //update to next phase & change appropriate signals
-
-	for (int i=0; i<4; i++) {
-		for (int j=0; j<numLanes[i]; j++) {
-			//for (int k=0; k<maxPhase; k++) {
-				if (signalStatus[i][j][get_currPhase(I)]==GREEN || signalStatus[i][j][get_currPhase(I)]==YELLOW) {
-					if (get_list_counter(laneQueues[i][j]) > 0) {
-						newEvent = peek_from_list(laneQueues[i][j]);
-						set_timestamp(newEvent, get_sim_time());
-						//set_object(E, v);
-						//set_object_type(E, VEHICLE);
-						//check left turns and directions?
-
-						if (i==NORTH) {
-							set_event_type(newEvent, IS_1_N_ENTERING);
-							set_callback(newEvent, IS_1_N_entering);
-						} else if (i==EAST) {
-							//TODO: left turn should only enter intersection if 
-							//west lane 1 cars are not going straight
-							set_event_type(newEvent, IS_1_E_ENTERING);
-							set_callback(newEvent, IS_1_E_entering);
-						} else if (i==SOUTH) {
-							//TODO: left turn should only enter if north lane 1/2
-							//cars are not going straight
-							set_event_type(newEvent, IS_1_S_ENTERING);
-							set_callback(newEvent, IS_1_S_entering);
-						} else if (i==WEST) {
-							//TODO: left turn should only enter if east lane 1 
-							//is not going straight
-							set_event_type(newEvent, IS_1_W_ENTERING);
-							set_callback(newEvent, IS_1_W_entering);
-						} else {exit(-1);}
-					}
-					schedule_event(newEvent);
-				}
-			//}
 		}
 	}
-	set_timestamp(E, get_sim_time() + phaseLengths[get_currPhase(I)]);
-	schedule_event(E);
-	// proceed to next IS1 signal status
-	// schedule next IS1 signal event
-	
-	//TODO_EISHA
-	//update field
-	//timestamp = curr time + len of phase
-
-	// schedule entering event for corresponding lanes
 }
 
 /* ======================================================================================== *\
@@ -740,7 +518,6 @@ static void IS_1_N_arrival( void* P ) {
 	}
 	set_laneID( V, newLane );
 	// Check traffic signal
-	if( get_light( IS_1, NORTH, newLane ) == INV ) { fprintf(stderr,"IS_1_N_arrival(): INV traffic signal\n"); }
 	if( get_light( IS_1, NORTH, newLane ) != GREEN ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
@@ -798,7 +575,6 @@ static void IS_1_E_arrival( void* P ) {
 	}
 	set_laneID( V, newLane );
 	// Check traffic signal
-	if( get_light( IS_1, EAST, newLane ) == INV ) { fprintf(stderr,"IS_1_E_arrival(): INV traffic signal\n"); }
 	if( get_light( IS_1, EAST, newLane ) != GREEN ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
@@ -857,47 +633,20 @@ static void IS_1_S_arrival( void* P ) {
 	}
 	set_laneID( V, newLane );
 	// Check traffic signal
-	if( get_light( IS_1, SOUTH, newLane ) == INV ) { fprintf(stderr,"IS_1_W_arrival(): INV traffic signal\n"); }
 	if( get_light( IS_1, SOUTH, newLane ) == RED) {
 		// Put vehicle in queue
-		//printf("red\n");
 		set_velocity( V, 0.0 );
 		add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
 	} else {
-		printf("whee\n");
 		// If queue is empty, and no vehicle is currently entering,
 		// schedule entering event directly
 		if(   get_list_counter( get_lane_queue( IS_1, SOUTH, newLane ) ) == 0
 		   && get_lane_flag( IS_1, SOUTH, newLane ) == 0 )
 		{
-			printf("scheduling, lane: %d\n", newLane);
-			//printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
 			add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
-			//printf("num: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, newLane)));
-			
-			Event x = (Event) peek_from_list( get_lane_queue( IS_1, SOUTH, newLane ) );
-			if (x==NULL) {
-				printf("x is null\n");
-			}
-			//printf("timestamp x: %lf\n", get_timestamp(x));
-			//printf("obj type x: %d\n", get_object_type(x));
-			//printf("event type x: %d, \n", get_event_type(x));
-			//printf("event type E: %d\n", get_event_type(E));
-			Vehicle veh = get_object(x);
-			if (veh==NULL) {
-				printf("vehicle is null\n");
-			}
-			printf("%6.2f, test: IS 1 South Arrival  , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(veh), get_origin(veh), get_destination(veh) );
-
-			if( peek_from_list( get_lane_queue( IS_1, SOUTH, newLane ) ) == NULL ) {
-				printf("AOSFHOIAF\n");
-			}
-
 			schedule_event( E );
 		} // Else: put vehicle in queue
 		else {
-			printf("nothing\n");
 			set_velocity( V, 0.0 );
 			add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
 		}
@@ -940,7 +689,6 @@ static void IS_1_W_arrival( void* P ) {
 	}
 	set_laneID( V, newLane );
 	// Check traffic signal
-	if( get_light( IS_1, WEST, newLane ) == INV ) { fprintf(stderr,"IS_1_W_arrival(): INV traffic signal\n"); }
 	if( get_light( IS_1, WEST, newLane ) != GREEN ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
@@ -1148,6 +896,9 @@ static void IS_1_N_crossing( void* P ) {
 		set_velocity(V, calc_velocity(get_velocity(V), time_to_departure) );
 	}
 	set_timestamp( E, get_sim_time() + time_to_departure );
+	// Schedule departure
+	schedule_event( E );
+
 	// Schedule entering event for following vehicle, if signal is still green
 	if( get_list_counter( get_lane_queue( IS_1, NORTH, laneID ) ) > 0
 	   && get_light( IS_1, NORTH, laneID ) == GREEN )
@@ -1202,6 +953,9 @@ static void IS_1_E_crossing( void* P ) {
 		set_velocity(V, calc_velocity(get_velocity(V), time_to_departure) );
 	}
 	set_timestamp( E, get_sim_time() + time_to_departure );
+	// Schedule departure
+	schedule_event( E );
+	
 	// Schedule entering event for following vehicle, if signal is still green
 	if( get_list_counter( get_lane_queue( IS_1, EAST, laneID ) ) > 0
 	   && get_light( IS_1, EAST, laneID ) == GREEN )
@@ -1256,6 +1010,9 @@ static void IS_1_S_crossing( void* P ) {
 		set_velocity(V, calc_velocity(get_velocity(V), time_to_departure) );
 	}
 	set_timestamp( E, get_sim_time() + time_to_departure );
+	// Schedule departure
+	schedule_event( E );
+	
 	// Schedule entering event for following vehicle, if signal is still green
 	if( get_list_counter( get_lane_queue( IS_1, SOUTH, laneID ) ) > 0
 	   && get_light( IS_1, SOUTH, laneID ) == GREEN )
@@ -1293,7 +1050,7 @@ static void IS_1_W_crossing( void* P ) {
 		}
 		default:  // Left turn
 		{
-			crossingDistance = get_crossing_distance( IS_1, WEST, STRAIGHT );
+			crossingDistance = get_crossing_distance( IS_1, WEST, LEFT );
 			set_event_type( E, IS_1_N_DEPARTURE );
 			set_callback( E, IS_1_N_departure );
 		}
@@ -1310,6 +1067,9 @@ static void IS_1_W_crossing( void* P ) {
 		set_velocity(V, calc_velocity(get_velocity(V), time_to_departure) );
 	}
 	set_timestamp( E, get_sim_time() + time_to_departure );
+	// Schedule departure
+	schedule_event( E );
+	
 	// Schedule entering event for following vehicle, if signal is still green
 	if( get_list_counter( get_lane_queue( IS_1, WEST, laneID ) ) > 0
 	   && get_light( IS_1, WEST, laneID ) == GREEN )

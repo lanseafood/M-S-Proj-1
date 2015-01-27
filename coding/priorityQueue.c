@@ -59,7 +59,7 @@ void free_priority_queue( PriorityQueue Q ) {
  * @return		: 1 if it has parent, 0 otherwise
  **/
 static inline UINT8 has_parent( PriorityQueue Q, UINT32 index ) {
-	return ( index > 1) ? 1 : 0;
+	return ( index > 1 ) ? 1 : 0;
 }
 
 /**

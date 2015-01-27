@@ -1,5 +1,5 @@
 # Authors: Mingyue Ma, Eisha Nathan, Stefan Henneking
-# Date   : 01/12/2015
+# Date   : 01/27/2015
 
 # Georgia Institute of Technology
 # CSE 6730: Road Traffic Simulation
@@ -8,22 +8,61 @@
 #                General Remarks                #
 # --------------------------------------------- #
 
-..
+Input parameters for the simulation are generally not passed in the program call, but set in the following source files:
+
+- main.c
+Overall simulation time in [ h, min, sec ] (lines 35-37)
+
+- simApplication.c
+Preprocessor directives (lines 20-26). For changed parameters to take effect the program has to be recompiled (make clean; make).
+
+  > IAT  Global Inter Arrival Time (mean value for exponential distribution)
+  > VEL  Maximum Vehicle Speed in ft/sec (35mph ~ 51ft/sec)
+  > ACC  Vehicle Acceleration in ft/sec^2
+  > VHL  Vehicle Length
+  > SDD  Safety Distance in ft while driving
+  > SDQ  Safety Distance in ft while queueing up
+  > SUD  Start-up delay / lost time (first car: delay when traffic light switches to green)
+
+( final implementation will also include a parameter to switch between synchronized and randomized traffic signal initialization ).
 
 # ============================================= #
 #                   Compiling                   #
 # --------------------------------------------- #
 
-..
+Compile the program with the provided makefile, using gcc compiler.
 
 # ============================================= #
 #                   Executing                   #
 # --------------------------------------------- #
 
-..
+Usage: ./main [<seed>]
+
+[<seed>] Optional parameter, which will be used as a random seed if it is passed as an argument.
 
 # ============================================= #
 #                    Modules                    #
 # --------------------------------------------- #
 
-..
+- Simulation Engine
+Runs the simulation by removing events from the event queue one by one (based on the event priority – timestamp), setting the current simulation time, and calling the event handler. Runs as long as specified by the total simulation time or until the event queue is empty. Contains public methods to schedule events and to return the current simulation time.
+
+- Simulation Application
+Implements the event handlers / callback functions as well as functions to initialize simulation variables and start the simulation. Parameters specifying input values for the simulation such as vehicle velocity, safety distance, or acceleration are defined as preprocessor directives. The application calculates also output parameters (e.g. average travel time) and prints information about the simulated events during the simulation.
+
+- Event
+Implements an event structure and provides methods to set/get event specific variables such as type of event, timestamp or callback function.
+
+- Vehicle
+Implements a vehicle structure and provides methods to set/get vehicle specific variables such as origin, destination, current velocity or lane ID.
+
+- Intersection
+Implements an intersection structure. The create method will initialize vehicle queues for each lane, the crossing distances and the signal timings depending on the intersection ID. The initial event handler for switching a traffic signal at the corresponding intersection is also be scheduled here. Provides methods to access vehicle queues and traffic lights.
+
+- Section
+Implements a section structure that contains section specific fields such as length, number of cars, congestion flags, etc. Initialization depends on the section ID.
+
+- PriorityQueue and LinkedList
+Data structure implementations of a binary heap (used for event queue) and a simple FIFO queue (used for vehicles queues at intersections).
+
+# eof

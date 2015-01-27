@@ -17,8 +17,7 @@ typedef struct IntersectionType *Intersection;
 typedef enum {
 	GREEN,
 	YELLOW,
-	RED,
-	INV
+	RED
 } Color;
 
 // Direction
@@ -45,23 +44,10 @@ typedef struct {
 
 Intersection create_intersection();
 
-int set_red(Intersection I, int num);
-
-int get_curr_phase(Intersection I, int curr);
-
-int *get_phase(Intersection I);
-
-int change_phase(Intersection I, int num);
-
-Signal **get_through_signals(Intersection I);
-
-Signal **get_left_signals(Intersection I);
-
 int ***get_signalStatus(Intersection I);
 
-int ***get_leftSignalStatus(Intersection I);
-
 double *get_phaseLengths(Intersection I);
+double get_totalPhaseLength(Intersection I);
 
 LinkedList **get_laneQueues(Intersection I);
 
@@ -69,19 +55,13 @@ int *get_numLanes(Intersection I);
 
 int get_maxPhase(Intersection I);
 
+int set_currPhase(Intersection I, int currPhase);
+
 int get_currPhase(Intersection I);
 
 int set_next_phase(Intersection I);
 
 int get_inter_zoneID(Intersection I);
-
-int get_signal_zoneID(Signal *S);
-
-int set_init(Signal *S, Color initial_color);
-
-Color get_init(Signal *S);
-
-int set_light(Intersection I, Direction D, int laneID, Color light);
 
 Color get_light(Intersection I, Direction D, int laneID);
 

@@ -12,19 +12,17 @@
 // Declare abstract type of Section
 typedef struct SectionType *Section;
 
-Section create_section(int zoneID);
+Section create_section(int zoneID, double vehicle_len, double safety_dist_queue);
 
 int get_zoneID(Section S);
 
 double get_len(Section S);
 
-int add_north_cars(Section S);
+int change_north_vehicles(Section S, int val);
+int change_south_vehicles(Section S, int val);
 
-int add_south_cars(Section S);
-
-int get_north_cars(Section S);
-
-int get_south_cars(Section S);
+int get_north_vehicles(Section S);
+int get_south_vehicles(Section S);
 
 #endif
 

@@ -37,7 +37,9 @@ void run_sim( double simEnd ) {
 		
 		// Update simulation time
 		if( get_timestamp(nextElement) < simTime ) {
-			fprintf(stderr,"run_sim(), event timestamp < simTime\n"); exit(1);
+			fprintf(stderr,"run_sim(), event timestamp < simTime\n");
+			printf( "event timestamp: %f ; simTime: %f\n", get_timestamp(nextElement), simTime );
+			exit(1);
 		}
 		if( get_timestamp(nextElement) < simEnd ) simTime = get_timestamp(nextElement);
 		else break;
