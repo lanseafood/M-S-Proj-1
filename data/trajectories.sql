@@ -20,7 +20,7 @@ create table if not exists trajectories	( 	vehicle_id int, frame_id int, tot_fra
 -- Build index
 create index if not exists traj_vehicle_id_index on trajectories(vehicle_id);
 
--- Creating views
+-- Creating view (filter trajectory data)
 create view if not exists vehicles as
 
 	select 	 distinct t.vehicle_id,
@@ -39,7 +39,7 @@ select '';
 .headers on
 .mode column
 
--- Output
+-- Output rows, vehicles of original trajectory data
 select 	count(t.vehicle_id) as "Number of Rows",
 		count(distinct t.vehicle_id) as "Number of Vehicles"
 from trajectories t
@@ -49,7 +49,7 @@ from trajectories t
 select'';
 .headers on
 
--- Output
+-- Output number of vehicles of filtered trajectory data
 select 	count(t.vehicle_id) as "Number of Vehicles (filtered origin and destination zones)"
 from vehicles t
 ;
@@ -58,7 +58,8 @@ from vehicles t
 select'';
 .headers on
 
-select avg(veh_len)
+-- Output average vehicle length
+select avg(veh_len) as "Average Vehicle Length"
 from vehicles
 ;
 
@@ -66,6 +67,7 @@ from vehicles
 select'';
 .headers on
 
+-- Output origin zone probability distribution
 select	v.org_zone as "Origin Zone",
 		count(v.vehicle_id) as "Vehicles",
 		round(100.0*count(v.vehicle_id) / ( select count(vc.vehicle_id) from vehicles vc ), 2) || '%' as "Probability"
@@ -77,6 +79,7 @@ group by v.org_zone
 select'';
 .headers on
 
+-- Output destination zone probability distribution
 select	v.dest_zone as "Destination Zone",
 		count(v.vehicle_id) as "Vehicles",
 		round(100.0*count(v.vehicle_id) / ( select count(vc.vehicle_id) from vehicles vc ), 2) || '%' as "Probability"
@@ -88,6 +91,7 @@ group by v.dest_zone
 select'';
 .headers on
 
+-- Output destination zone probability distribution dependent on origin
 select 	a."Origin Zone" as "Origin Zone", 
 		a."Destination Zone" as "Destination Zone",
 		a."Vehicles" as "Vehicles",
