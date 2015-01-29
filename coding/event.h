@@ -23,13 +23,11 @@ typedef enum {
 } TypeOfObject;
 
 typedef enum {
+	INV = -1,
 	// Global events
 	GLOBAL_ARRIVAL, GLOBAL_DEPARTURE,
-	// Intersection signal events
-	IS_1_SIGNAL, IS_2_SIGNAL, IS_3_SIGNAL, IS_4_SIGNAL, IS_5_SIGNAL,
-
-	IS1_INITIAL, IS2_INITIAL, IS3_INITIAL, IS4_INITIAL, IS5_INITIAL,
-
+	// Intersection signal event
+	IS_SIGNAL,
 	// Intersection vehicle events
 	IS_1_N_ARRIVAL, IS_1_N_ENTERING, IS_1_N_CROSSING, IS_1_N_DEPARTURE,
 	IS_1_E_ARRIVAL, IS_1_E_ENTERING, IS_1_E_CROSSING, IS_1_E_DEPARTURE,
@@ -39,8 +37,23 @@ typedef enum {
 	S_2_N_CLEAR, S_2_S_CLEAR,
 	S_3_N_CLEAR, S_3_S_CLEAR,
 	S_4_N_CLEAR, S_4_S_CLEAR,
-	S_5_N_CLEAR, S_5_S_CLEAR
+	S_5_N_CLEAR, S_5_S_CLEAR,
+	// Number of event types
+	NUM_EVENT_TYPES
 } TypeOfEvent;
+
+static const char TypeOfEventStrings[NUM_EVENT_TYPES][20] = {
+	{"GLOBAL_ARRIVAL"},{"GLOBAL_DEPARTURE"},
+	{"IS_SIGNAL"},
+	{"IS_1_N_ARRIVAL"},{"IS_1_N_ENTERING"},{"IS_1_N_CROSSING"},{"IS_1_N_DEPARTURE"},
+	{"IS_1_E_ARRIVAL"},{"IS_1_E_ENTERING"},{"IS_1_E_CROSSING"},{"IS_1_E_DEPARTURE"},
+	{"IS_1_S_ARRIVAL"},{"IS_1_S_ENTERING"},{"IS_1_S_CROSSING"},{"IS_1_S_DEPARTURE"},
+	{"IS_1_W_ARRIVAL"},{"IS_1_W_ENTERING"},{"IS_1_W_CROSSING"},{"IS_1_W_DEPARTURE"},
+	{"S_2_N_CLEAR"},{"S_2_S_CLEAR"},
+	{"S_3_N_CLEAR"},{"S_3_S_CLEAR"},
+	{"S_4_N_CLEAR"},{"S_4_S_CLEAR"},
+	{"S_5_N_CLEAR"},{"S_5_S_CLEAR"}
+};
 
 /**
  * Create a new Event
@@ -72,6 +85,9 @@ int set_timestamp( Event E, double timestamp );
  * @return  : Timestamp of Event on success, -1 otherwise
  **/
 double get_timestamp( void *P );
+
+int set_scheduled( void *P, int value );
+int get_scheduled( void *P );
 
 /**
  * Set Object of Event

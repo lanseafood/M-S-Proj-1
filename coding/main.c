@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     // Check input arguments
     if( argc > 2 ) {
         fprintf(stderr,"\nUsage: %s [seed]\n\n", argv[0]);
-        return -1;
+        return 1;
     }
 	
 	// Seed value for random number generator
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 	
 	// Overall simulation time in seconds
 	double hours   = 0;
-	double minutes = 5;
+	double minutes = 15;
 	double seconds = 0;
 	double simEnd  = hours*3600 + minutes*60 + seconds;
 	

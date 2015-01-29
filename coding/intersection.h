@@ -56,7 +56,6 @@ int *get_numLanes(Intersection I);
 int get_maxPhase(Intersection I);
 
 int set_currPhase(Intersection I, int currPhase);
-
 int get_currPhase(Intersection I);
 
 int set_next_phase(Intersection I);
@@ -64,13 +63,9 @@ int set_next_phase(Intersection I);
 int get_inter_zoneID(Intersection I);
 
 Color get_light(Intersection I, Direction D, int laneID);
-
-double get_ns_len(Intersection I);
-
-double get_ew_len(Intersection I);
+int get_protected(Intersection I);
 
 int add_car(Intersection I);
-
 int get_num_cars(Intersection I);
 
 LinkedList get_lane_queue( Intersection I, Direction D, int laneID);

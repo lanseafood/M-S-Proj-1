@@ -5,6 +5,17 @@
 # CSE 6730: Road Traffic Simulation
 
 # ============================================= #
+#               PROJECT CHECKPOINT              #
+# --------------------------------------------- #
+
+So far we have implemented all data structures and classes necessary for the final implementation (see "Modules"). This "checkpoint" submission includes a detailed simulation for Intersection 1 (cf. topology in the report), that is, instead of proceeding to Intersection 2, the vehicles will "depart globally" (leave the simulation) when leaving Intersection 1 northbound. For Intersection 1 all lanes have been implemented as well as the traffic signals and features such as red light right turns and two different phases for dedicated left turn signals (protected / permitted). Additionally, the traffic model includes acceleration, safety distances and further important "constants" (see input parameters). Traffic signal timings are implemented in "intersection.c" and initialized randomly (which represents the asynchronized case).
+
+Remaining steps for the implementation are:
+> Implementation of Intersections 2-5 event handlers
+> Congestion events
+> Traffic light synchronization
+
+# ============================================= #
 #                General Remarks                #
 # --------------------------------------------- #
 
@@ -14,7 +25,7 @@ Input parameters for the simulation are generally not passed in the program call
 Overall simulation time in [ h, min, sec ] (lines 35-37)
 
 - simApplication.c
-Preprocessor directives (lines 20-26). For changed parameters to take effect the program has to be recompiled (make clean; make).
+Preprocessor directives (lines 19-25). For changed parameters to take effect the program has to be recompiled (make clean; make).
 
   > IAT  Global Inter Arrival Time (mean value for exponential distribution)
   > VEL  Maximum Vehicle Speed in ft/sec (35mph ~ 51ft/sec)
@@ -24,7 +35,12 @@ Preprocessor directives (lines 20-26). For changed parameters to take effect the
   > SDQ  Safety Distance in ft while queueing up
   > SUD  Start-up delay / lost time (first car: delay when traffic light switches to green)
 
-( final implementation will also include a parameter to switch between synchronized and randomized traffic signal initialization ).
+Line 30: SYNC_SIGNAL
+> Switch between synchronized and randomized traffic signal initialization
+> Enable (1) for synchronized initialization (not yet implemented)
+
+Line 33: VERBOSE
+> Enable (1) in order to print event information to stdout
 
 # ============================================= #
 #                   Compiling                   #
@@ -57,7 +73,7 @@ Implements an event structure and provides methods to set/get event specific var
 Implements a vehicle structure and provides methods to set/get vehicle specific variables such as origin, destination, current velocity or lane ID.
 
 - Intersection
-Implements an intersection structure. The create method will initialize vehicle queues for each lane, the crossing distances and the signal timings depending on the intersection ID. The initial event handler for switching a traffic signal at the corresponding intersection is also be scheduled here. Provides methods to access vehicle queues and traffic lights.
+Implements an intersection structure. The "create method" will initialize vehicle queues for each lane, the crossing distances and the signal timings depending on the intersection ID. The initial event handler for switching a traffic signal at the corresponding intersection is scheduled in the simApplication. Provides methods to access vehicle queues and traffic lights.
 
 - Section
 Implements a section structure that contains section specific fields such as length, number of cars, congestion flags, etc. Initialization depends on the section ID.

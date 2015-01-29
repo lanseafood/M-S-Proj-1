@@ -20,6 +20,8 @@ void set_up_sim() {
 }
 
 int schedule_event( queueElement E ) {
+	if( get_scheduled( E ) == 1 ) return 1;
+	set_scheduled( E, 1 );
 	if( add( eventQueue, E ) == -1 ) return -1;
 	return 0;
 }
@@ -38,13 +40,14 @@ void run_sim( double simEnd ) {
 		// Update simulation time
 		if( get_timestamp(nextElement) < simTime ) {
 			fprintf(stderr,"run_sim(), event timestamp < simTime\n");
-			printf( "event timestamp: %f ; simTime: %f\n", get_timestamp(nextElement), simTime );
+			fprintf(stderr,"event timestamp: %f ; simTime: %f\n", get_timestamp(nextElement), simTime );
 			exit(1);
 		}
 		if( get_timestamp(nextElement) < simEnd ) simTime = get_timestamp(nextElement);
 		else break;
-		
+
 		// Call event handler
+		set_scheduled( nextElement, 0 );
 		cb = get_callback( nextElement );
 		cb( nextElement );
 	}

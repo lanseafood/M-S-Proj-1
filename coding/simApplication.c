@@ -13,11 +13,10 @@
 #include "event.h"
 #include "intersection.h"
 #include "linkedList.h"
-#include "priorityQueue.h"
 #include "section.h"
 #include "simApplication.h"
 
-#define IAT 10.0f    // Global Inter Arrival Time (mean value for exponential distribution)
+#define IAT  5.0f    // Global Inter Arrival Time (mean value for exponential distribution)
 #define VEL 51.0f    // Maximum Vehicle Speed in ft/sec (35mph ~ 51ft/sec)
 #define ACC 10.0f    // Vehicle Acceleration in ft/sec^2
 #define VHL 15.0f    // Vehicle length
@@ -25,7 +24,13 @@
 #define SDQ  5.0f    // Safety Distance in ft while queueing up
 #define SUD  1.0f    // Start-up delay / lost time (first car: delay when traffic light switches to green)
 
-#define SDT ( ( SDD + VHL ) / VEL ) // Safety Distance in sec while driving
+#define SDT ( ( SDD + VHL ) / VEL ) // Safety Distance in sec while driving with max. velocity
+
+// Define this preprocessor
+#define SYNC_SIGNAL 0
+
+// Print events to stdout
+#define VERBOSE 1
 
 // Pointer declaration: compare function for priority queue
 int (*compare_to)( void*, void* );
@@ -55,8 +60,8 @@ static double p_origins[11] =
 static double p_destinations[11][11] =
 {
 //    -201- -202- -203- -206- -212- -213- -214- -215- -221- -222- -223-
-	{ 0.00, 0.10, 0.00, 0.00, 0.00, 0.00, 0.80, 0.00, 0.00, 0.00, 0.10 }, // origin 101
-	{ 0.10, 0.00, 0.00, 0.00, 0.00, 0.00, 0.80, 0.00, 0.00, 0.00, 0.10 }, // origin 102
+	{ 0.00, 0.25, 0.00, 0.00, 0.00, 0.00, 0.50, 0.00, 0.00, 0.00, 0.25 }, // origin 101
+	{ 0.25, 0.00, 0.00, 0.00, 0.00, 0.00, 0.50, 0.00, 0.00, 0.00, 0.25 }, // origin 102
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 103
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 106
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 112
@@ -65,7 +70,7 @@ static double p_destinations[11][11] =
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 115
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 121
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 122
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }  // origin 123
+	{ 0.25, 0.25, 0.00, 0.00, 0.00, 0.00, 0.50, 0.00, 0.00, 0.00, 0.00 }  // origin 123
 };
 
 /*
@@ -76,12 +81,10 @@ Traffic Peachtree St. NE, 10th-14th: 4.00pm-4.15pm
 Original Trajectory Data: 753 Vehicles
 Filtered Trajectory Data: 667 Vehicles
   > Origin and Destination Zones restricted to this model (driveways excluded)
-  > Origin Zone must be different from Destination Done (no U-Turns)
+  > Origin Zone must be different from Destination Zone (no U-Turns)
 --------------------------------------------------------------------------------------
-[Original Data]: 
-Average Inter-Arrival Time: 0.83 sec
+Average Inter-Arrival Time: 0.83 sec (assuming all vehicles entered during the 15min timespan)
 Average Vehicle Length    : 16.3 ft
-[Filtered Data]:
 static double p_origins[11] =
 //  -101-   -102-   -103-   -106-   -112-   -113-   -114-   -115-   -121-   -122-   -123-
 { 0.1874, 0.0495, 0.0135, 0,0000, 0.0195, 0.0036, 0.3793, 0.1559, 0.0150, 0.0735, 0.0705 };
@@ -131,15 +134,16 @@ static inline double calc_time( double v_cur, double dist ) {
 /* Event initialization */
 static Event init_event( double timestamp, void *object, TypeOfObject OT, TypeOfEvent ET, fptr cb );
 
-/* Generates a random number from [0,1) */
-static double urand();
-/* Generates a random number from an exponential distribution with mean = IAT */
-static double randexp();
-
 /* Auxiliary functions */
+static double urand();
+static double randexp();
 static int pick_signal_phase( Intersection I );
 static int pick_origin();
 static int pick_destination( int origin );
+static void check_and_print_vehicle_event( Event E );
+
+static int IS_1_red_right_turn( Direction D );
+static int IS_1_left_turn( Direction D );
 
 /* Traffic signal initialization */
 static void rand_signal_init();
@@ -149,13 +153,7 @@ static void sync_signal_init();
 static void global_arrival( void *P );
 static void global_departure( void *P );
 
-static void IS_1_signal( void *P );
-static void IS_2_signal( void *P );
-/*
-static void IS_3_signal( void *P );
-static void IS_4_signal( void *P );
-static void IS_5_signal( void *P );
-*/
+static void IS_signal( void *P );
 
 static void IS_1_N_arrival( void* P );
 static void IS_1_E_arrival( void* P );
@@ -177,8 +175,21 @@ static void IS_1_E_departure( void* P );
 static void IS_1_S_departure( void* P );
 static void IS_1_W_departure( void* P );
 
-static void (*IS_1_ENTER[4])(void *)    = { IS_1_N_entering, IS_1_E_entering, IS_1_S_entering, IS_1_W_entering };
-static TypeOfEvent IS_1_ENTER_EVENTS[4] = { IS_1_N_ENTERING, IS_1_E_ENTERING, IS_1_S_ENTERING, IS_1_W_ENTERING };
+static void (*IS_ENTER[5][4])(void *) = {
+	{ IS_1_N_entering, IS_1_E_entering, IS_1_S_entering, IS_1_W_entering },
+	{ IS_1_N_entering, IS_1_E_entering, IS_1_S_entering, IS_1_W_entering },
+	{ IS_1_N_entering, IS_1_E_entering, IS_1_S_entering, IS_1_W_entering },
+	{ IS_1_N_entering, IS_1_E_entering, IS_1_S_entering, NULL            },
+	{ IS_1_N_entering, IS_1_E_entering, IS_1_S_entering, IS_1_W_entering }
+};
+
+static TypeOfEvent IS_ENTER_EVENTS[5][4] = {
+	{ IS_1_N_ENTERING, IS_1_E_ENTERING, IS_1_S_ENTERING, IS_1_W_ENTERING },
+	{ IS_1_N_ENTERING, IS_1_E_ENTERING, IS_1_S_ENTERING, IS_1_W_ENTERING },
+	{ IS_1_N_ENTERING, IS_1_E_ENTERING, IS_1_S_ENTERING, IS_1_W_ENTERING },
+	{ IS_1_N_ENTERING, IS_1_E_ENTERING, IS_1_S_ENTERING, INV             },
+	{ IS_1_N_ENTERING, IS_1_E_ENTERING, IS_1_S_ENTERING, IS_1_W_ENTERING }
+};
 
 /* --------------------------------------------------------------------------------------- */
 /* ======================================================================================= */
@@ -194,7 +205,7 @@ void create_sim( double simEnd ) {
 	//IS_3 = create_intersection( 3 );
 	//IS_4 = create_intersection( 4 );
 	//IS_5 = create_intersection( 5 );
-	
+
 	// Create Sections
 	S_1 = create_section( 1, VHL, SDQ );
 	S_1 = create_section( 2, VHL, SDQ );
@@ -208,7 +219,7 @@ void create_sim( double simEnd ) {
 	departures = 0;
 	totalWaitTime = 0.0;
 	totalTravelTime = 0.0;
-		
+	
 	// Call engine setup
 	set_up_sim();
 
@@ -218,8 +229,11 @@ void create_sim( double simEnd ) {
 	
 	// Initialize signal events
 	printf( "\n---------------------------------------------------------\n");
-	rand_signal_init();
-	//sync_signal_init();
+	#if SYNC_SIGNAL == 1
+		sync_signal_init();
+	#else
+		rand_signal_init();
+	#endif
 	printf( "---------------------------------------------------------\n");
 	
 	// Run simulation
@@ -256,6 +270,12 @@ static Event init_event( double timestamp, void *object, TypeOfObject OT, TypeOf
 	if( set_callback( E, cb ) != 0 ) { fprintf(stderr,"Error from init_event(): set_callback\n"); exit(1); }
 	return E;
 }
+
+/* ======================================================================================== *\
+|*                                                                                          *|
+|*                                  AUXILIARY FUNCTIONS                                     *|
+|*                                                                                          *|
+\* ---------------------------------------------------------------------------------------- */
 
 // Generate random number in [0,1)
 static double urand() {
@@ -311,6 +331,125 @@ static int pick_destination( int origin_id ) {
 	return destination_id;
 }
 
+// Check pointer and print event data
+static void check_and_print_vehicle_event( Event E ) {
+	if( E == NULL ) { fprintf(stderr,"Error from check_and_print_vehicle_event: E is NULL\n"); exit(1); }
+	const char *event = TypeOfEventStrings[get_event_type( E )];
+	Vehicle V = get_object( E );
+	if( V == NULL ) { fprintf(stderr,"Error from %s: V is NULL\n", event); exit(1); }
+	#if VERBOSE == 1
+		printf("%7.2f, %-20s, Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n"
+		   , get_sim_time(), event, get_id(V), get_origin(V), get_destination(V) );
+	#endif
+}
+
+// Check if red right turn for direction D is possible based on IS 1 traffic
+static int IS_1_red_right_turn( Direction D ) {
+	int redRightTurn = 0;
+	if( get_list_counter( get_lane_queue( IS_1, D, get_numLanes( IS_1 )[D] ) ) == 0 ) return 0;
+	if( get_lane_flag( IS_1, D, get_numLanes( IS_1 )[D] ) == 1 ) return 0;
+	Event E = peek_from_list( get_lane_queue( IS_1, D, get_numLanes( IS_1 )[D] ) );
+	if( get_scheduled(E) == 1 ) return 0;
+	Vehicle V = get_object( E );
+	switch( D ) {
+		case NORTH:
+		{
+			if(   get_destination( V ) == 223
+			   && get_lane_counter( IS_1, SOUTH, 1 ) == 0
+			   && get_lane_counter( IS_1,  EAST, 2 ) == 0
+			   && get_lane_counter( IS_1,  EAST, 3 ) == 0
+			) redRightTurn = 1;
+			break;
+		}
+		case  EAST:
+		{
+			if(   get_laneID( V ) == 3
+			   && get_destination( V ) != 223
+			   && get_lane_counter( IS_1,  WEST, 1 ) == 0
+			   && get_lane_counter( IS_1, SOUTH, 2 ) == 0
+			   && get_lane_counter( IS_1, SOUTH, 3 ) == 0
+			   ) redRightTurn = 1;
+			break;
+		}
+		case SOUTH:
+		{
+			if(   get_destination( V ) == 202
+			   && get_lane_counter( IS_1, NORTH, 1 ) == 0
+			   && get_lane_counter( IS_1,  WEST, 2 ) == 0
+			   && get_lane_counter( IS_1,  WEST, 3 ) == 0
+			   ) redRightTurn = 1;
+			break;
+		}
+		case  WEST:
+		{
+			if(   get_destination( V ) == 201
+			   && get_lane_counter( IS_1,  EAST, 1 ) == 0
+			   && get_lane_counter( IS_1, NORTH, 2 ) == 0
+			   && get_lane_counter( IS_1, NORTH, 3 ) == 0
+			   ) redRightTurn = 1;
+			break;
+		}
+		default:
+			fprintf(stderr,"Error from IS_1_red_right_turn(): invalid direction\n"); exit(1);
+	}
+	return redRightTurn;
+}
+
+// Check if left turn for direction D is possible based on IS 1 traffic
+static int IS_1_left_turn( Direction D ) {
+	int leftTurn = 0;
+	if( get_list_counter( get_lane_queue( IS_1, D, 1 ) ) == 0 ) return 0;
+	
+	Event E = peek_from_list( get_lane_queue( IS_1, D, 1 ) );
+	if( get_scheduled(E) == 1 ) return 0;
+	Vehicle V = get_object( E );
+	
+	if( get_light( IS_1, D, 1 ) != GREEN ) return 0;
+	if( get_lane_flag( IS_1, D, 1 ) == 1 ) return 0;
+	if( get_protected( IS_1 ) == 1 ) return 1;
+	
+	switch( D ) {
+		case NORTH:
+		{
+			if(   get_lane_counter( IS_1, SOUTH, 2 ) == 0
+			   && get_lane_counter( IS_1, SOUTH, 3 ) == 0
+			   ) leftTurn = 1;
+			break;
+		}
+		case  EAST:
+		{
+			if(   get_lane_counter( IS_1, WEST, 2 ) == 0
+			   && get_lane_counter( IS_1, WEST, 3 ) == 0
+			   && get_lane_counter( IS_1, WEST, 4 ) == 0
+			   ) leftTurn = 1;
+			break;
+		}
+		case SOUTH:
+		{
+			if(   get_lane_counter( IS_1, NORTH, 2 ) == 0
+			   && get_lane_counter( IS_1, NORTH, 3 ) == 0
+			   ) leftTurn = 1;
+			break;
+		}
+		case  WEST:
+		{
+			if(   get_lane_counter( IS_1, EAST, 2 ) == 0
+			   && get_lane_counter( IS_1, EAST, 3 ) == 0
+			   ) leftTurn = 1;
+			break;
+		}
+		default:
+			fprintf(stderr,"Error from IS_1_left_turn(): invalid direction\n"); exit(1);
+	}
+	return leftTurn;
+}
+
+/* ======================================================================================== *\
+|*                                                                                          *|
+|*                             TRAFFIC SIGNAL INITIALIZATION                                *|
+|*                                                                                          *|
+\* ---------------------------------------------------------------------------------------- */
+
 static void rand_signal_init() {
 	printf("Random Signal Initialization\n");
 	// IS 1
@@ -318,7 +457,7 @@ static void rand_signal_init() {
 	set_currPhase( IS_1, randPhase );
 	double nextSignalSwitch = urand() * (get_phaseLengths(IS_1))[randPhase];
 	printf( "  - Intersection 1; phase: %2d, next signal event: %5.2f\n", randPhase, nextSignalSwitch );
-	Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_1_SIGNAL, IS_1_signal );
+	Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_SIGNAL, IS_signal );
 	schedule_event( Inter_1 );
 	// IS 2
 	/*
@@ -326,7 +465,7 @@ static void rand_signal_init() {
 	set_currPhase( IS_2, randPhase );
 	nextSignalSwitch = urand() * (get_phaseLengths(IS_2))[randPhase];
 	printf( "  - Intersection 2; phase: %2d, next signal event: %5.2f\n", randPhase, nextSignalSwitch );
-	Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_2_SIGNAL, IS_2_signal );
+	Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_SIGNAL, IS_signal );
 	schedule_event( Inter_2 );
 	*/
 }
@@ -393,13 +532,12 @@ static void global_arrival( void* P ) {
 			set_callback  ( E, IS_1_W_arrival );
 			break;
 		default:
-			fprintf(stderr,"Error from global_arrival(): invalid origin zone, E is NULL\n"); exit(1);
+			fprintf(stderr,"Error from global_arrival(): invalid origin zone\n"); exit(1);
 	}
 	schedule_event( E );
 	
 	// Print output
-	printf("%6.2f, Global Arrival      , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-			get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
+	check_and_print_vehicle_event( E );
 	
 	// Schedule next global vehicle arrival
 	Event nextArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
@@ -412,12 +550,8 @@ static void global_arrival( void* P ) {
 // Event handler for a global vehicle departure
 static void global_departure( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from global_departure(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from global_departure(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, Global Departure    , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	// Change state variables
 	totalTravelTime += ( get_sim_time() - get_arrival_time( V ) );
@@ -434,13 +568,16 @@ static void global_departure( void* P ) {
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
 
-static void IS_1_signal( void* P ) {
+static void IS_signal( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_signal(): E is NULL\n"); exit(1); }
+	if( E == NULL ) { fprintf(stderr,"Error from IS_signal(): E is NULL\n"); exit(1); }
 	Intersection I = get_object( E );
-	if( I == NULL ) { fprintf(stderr,"Error from IS_1_signal(): I is NULL\n"); exit(1); }
-	printf("%6.2f, Intersection 1 Signal Event;  ", get_sim_time() );
-
+	int ID = get_inter_zoneID( I );
+	if( I == NULL ) { fprintf(stderr,"Error from IS_signal(): I is NULL\n"); exit(1); }
+	#if VERBOSE == 1
+		printf("%7.2f, Intersection %d Signal Event; ", get_sim_time(), ID );
+	#endif
+	
 	// Get intersection fields
 	int ***signalStatus = get_signalStatus(I);
 	double *phaseLengths = get_phaseLengths(I);
@@ -449,25 +586,30 @@ static void IS_1_signal( void* P ) {
 	LinkedList **laneQueues = get_laneQueues(I);
 	
 	// Update to next phase & change appropriate signals
-	printf("old phase: %d, ", get_currPhase(I));
+	int oldPhase = get_currPhase(I);
 	set_next_phase(I);
-	int curr_phase = get_currPhase(I);
-	printf("new phase: %d, phase length: %5.2f\n", curr_phase, phaseLengths[curr_phase]);
+	int currPhase = get_currPhase(I);
+	#if VERBOSE == 1
+		printf("old phase: %2d, new phase: %2d, phaseLength: %5.2f\n",
+		   oldPhase, currPhase, phaseLengths[currPhase]);
+	#endif
 	// Schedule next signal event
-	set_timestamp(E, get_sim_time() + phaseLengths[curr_phase]);
+	set_timestamp(E, get_sim_time() + phaseLengths[currPhase]);
 	schedule_event(E);
 
 	// Schedule entering events for vehicles
-	Event newEvent = NULL;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < numLanes[i]; j++) {
-			if ( signalStatus[i][j][curr_phase] == GREEN ) {
+			if ( signalStatus[i][j][currPhase] == GREEN && signalStatus[i][j][oldPhase] == RED ) {
 				if ( get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j) == 0 ) {
-					newEvent = peek_from_list(laneQueues[i][j]);
-					set_timestamp(newEvent, get_sim_time());
+					Event newEvent = peek_from_list(laneQueues[i][j]);
+					set_timestamp(newEvent, get_sim_time()); // INCLUDE START UP DELAY ? -> SUD
 					
-					set_event_type(newEvent, IS_1_ENTER_EVENTS[i]);
-					set_callback  (newEvent, IS_1_ENTER       [i]);
+					set_event_type(newEvent, IS_ENTER_EVENTS[ID-1][i]);
+					set_callback  (newEvent, IS_ENTER       [ID-1][i]);
+					schedule_event( newEvent ); // SCHEDULING EVEN FOR LEFT TURN PERMITTED INTERVALS
+					// --> SOLUTION? : ONLY USE LEADING DEDICATED LEFT TURN INTERVALS
+					// ( i.e. when left turn signal switches to green, then it is dedicated left turn )
 				}
 			}
 		}
@@ -482,12 +624,8 @@ static void IS_1_signal( void* P ) {
 
 static void IS_1_N_arrival( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_N_arrival(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_N_arrival(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 North Arrival  , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	set_event_type( E, IS_1_N_ENTERING );
 	set_callback( E, IS_1_N_entering );
@@ -517,23 +655,29 @@ static void IS_1_N_arrival( void* P ) {
 			fprintf(stderr,"Error from IS_1_N_arrival(): unexpected destination zone\n"); exit(1);
 	}
 	set_laneID( V, newLane );
+	add_to_list( get_lane_queue( IS_1, NORTH, newLane ), E );
 	// Check traffic signal
 	if( get_light( IS_1, NORTH, newLane ) != GREEN ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
-		add_to_list( get_lane_queue( IS_1, NORTH, newLane ), E );
+		if( IS_1_red_right_turn( NORTH ) ) {
+			Event entering = peek_from_list( get_lane_queue( IS_1, NORTH, 3 ) );
+			set_timestamp( entering, get_sim_time() );
+			schedule_event( entering );
+		}
 	} else {
 		// If queue is empty, and no vehicle is currently entering,
 		// schedule entering event directly
-		if(   get_list_counter( get_lane_queue( IS_1, NORTH, newLane ) ) == 0
+		if(   get_list_counter( get_lane_queue( IS_1, NORTH, newLane ) ) == 1
 		   && get_lane_flag( IS_1, NORTH, newLane ) == 0 )
 		{
-			add_to_list( get_lane_queue( IS_1, NORTH, newLane ), E );
-			schedule_event( E );
-		} // Else: put vehicle in queue
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( newLane == 1 && IS_1_left_turn( NORTH ) == 0 ) ) {
+				schedule_event( E );
+			}
+		}
 		else {
 			set_velocity( V, 0.0 );
-			add_to_list( get_lane_queue( IS_1, NORTH, newLane ), E );
 		}
 	}
 	set_wait_time_buf( V, get_sim_time() );
@@ -541,12 +685,8 @@ static void IS_1_N_arrival( void* P ) {
 
 static void IS_1_E_arrival( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_E_arrival(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_E_arrival(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 East  Arrival  , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	set_event_type( E, IS_1_E_ENTERING );
 	set_callback( E, IS_1_E_entering );
@@ -574,36 +714,36 @@ static void IS_1_E_arrival( void* P ) {
 		}
 	}
 	set_laneID( V, newLane );
+	add_to_list( get_lane_queue( IS_1, EAST, newLane ), E );
 	// Check traffic signal
 	if( get_light( IS_1, EAST, newLane ) != GREEN ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
-		add_to_list( get_lane_queue( IS_1, EAST, newLane ), E );
+		if( IS_1_red_right_turn( EAST ) ) {
+			Event entering = peek_from_list( get_lane_queue( IS_1, EAST, 3 ) );
+			set_timestamp( entering, get_sim_time() );
+			schedule_event( entering );
+		}
 	} else {
 		// If queue is empty, and no vehicle is currently entering,
 		// schedule entering event directly
-		if(   get_list_counter( get_lane_queue( IS_1, EAST, newLane ) ) == 0
+		if(   get_list_counter( get_lane_queue( IS_1, EAST, newLane ) ) == 1
 		   && get_lane_flag( IS_1, EAST, newLane ) == 0 )
 		{
-			add_to_list( get_lane_queue( IS_1, EAST, newLane ), E );
-			schedule_event( E );
-		} // Else: put vehicle in queue
-		else {
-			set_velocity( V, 0.0 );
-			add_to_list( get_lane_queue( IS_1, EAST, newLane ), E );
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( newLane == 1 && IS_1_left_turn( EAST ) == 0 ) ) {
+				schedule_event( E );
+			}
 		}
+		else { set_velocity( V, 0.0 ); }
 	}
 	set_wait_time_buf( V, get_sim_time() );
 }
 
 static void IS_1_S_arrival( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_S_arrival(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_S_arrival(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 South Arrival  , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	set_event_type( E, IS_1_S_ENTERING );
 	set_callback( E, IS_1_S_entering );
@@ -624,7 +764,6 @@ static void IS_1_S_arrival( void* P ) {
 		}
 		default: // Straight
 		{
-			//printf("straight\n");
 			// Choose shorter lane
 			newLane = ( get_list_counter( get_lane_queue( IS_1, SOUTH, 3 ) ) <
 					    get_list_counter( get_lane_queue( IS_1, SOUTH, 2 ) )
@@ -632,36 +771,36 @@ static void IS_1_S_arrival( void* P ) {
 		}
 	}
 	set_laneID( V, newLane );
+	add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
 	// Check traffic signal
-	if( get_light( IS_1, SOUTH, newLane ) == RED) {
+	if( get_light( IS_1, SOUTH, newLane ) != GREEN ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
-		add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
+		if( IS_1_red_right_turn( SOUTH ) ) {
+			Event entering = peek_from_list( get_lane_queue( IS_1, SOUTH, 3 ) );
+			set_timestamp( entering, get_sim_time() );
+			schedule_event( entering );
+		}
 	} else {
 		// If queue is empty, and no vehicle is currently entering,
 		// schedule entering event directly
-		if(   get_list_counter( get_lane_queue( IS_1, SOUTH, newLane ) ) == 0
+		if(   get_list_counter( get_lane_queue( IS_1, SOUTH, newLane ) ) == 1
 		   && get_lane_flag( IS_1, SOUTH, newLane ) == 0 )
 		{
-			add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
-			schedule_event( E );
-		} // Else: put vehicle in queue
-		else {
-			set_velocity( V, 0.0 );
-			add_to_list( get_lane_queue( IS_1, SOUTH, newLane ), E );
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( newLane == 1 && IS_1_left_turn( SOUTH ) == 0 ) ) {
+				schedule_event( E );
+			}
 		}
+		else { set_velocity( V, 0.0 ); }
 	}
 	set_wait_time_buf( V, get_sim_time() );
 }
 
 static void IS_1_W_arrival( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_W_arrival(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_W_arrival(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 West  Arrival  , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	set_event_type( E, IS_1_W_ENTERING );
 	set_callback( E, IS_1_W_entering );
@@ -688,24 +827,28 @@ static void IS_1_W_arrival( void* P ) {
 		}
 	}
 	set_laneID( V, newLane );
+	add_to_list( get_lane_queue( IS_1, WEST, newLane ), E );
 	// Check traffic signal
 	if( get_light( IS_1, WEST, newLane ) != GREEN ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
-		add_to_list( get_lane_queue( IS_1, WEST, newLane ), E );
+		if( IS_1_red_right_turn( WEST ) ) {
+			Event entering = peek_from_list( get_lane_queue( IS_1, WEST, 4 ) );
+			set_timestamp( entering, get_sim_time() );
+			schedule_event( entering );
+		}
 	} else {
 		// If queue is empty, and no vehicle is currently entering,
 		// schedule entering event directly
-		if(   get_list_counter( get_lane_queue( IS_1, WEST, newLane ) ) == 0
+		if(   get_list_counter( get_lane_queue( IS_1, WEST, newLane ) ) == 1
 		   && get_lane_flag( IS_1, WEST, newLane ) == 0 )
 		{
-			add_to_list( get_lane_queue( IS_1, WEST, newLane ), E );
-			schedule_event( E );
-		} // Else: put vehicle in queue
-		else {
-			set_velocity( V, 0.0 );
-			add_to_list( get_lane_queue( IS_1, WEST, newLane ), E );
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( newLane == 1 && IS_1_left_turn( WEST ) == 0 ) ) {
+				schedule_event( E );
+			}
 		}
+		else { set_velocity( V, 0.0 ); }
 	}
 	set_wait_time_buf( V, get_sim_time() );
 }
@@ -714,14 +857,11 @@ static void IS_1_W_arrival( void* P ) {
 
 static void IS_1_N_entering( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_N_entering(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_N_entering(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 North Entering , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	int laneID = get_laneID( V );
+	if( laneID == 1 && IS_1_left_turn( NORTH ) == 0 ) return;
 	// Check if this event is first in the queue
 	if( peek_from_list( get_lane_queue( IS_1, NORTH, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_1_N_entering(): E is not first in queue\n"); exit(1);
@@ -747,14 +887,11 @@ static void IS_1_N_entering( void* P ) {
 
 static void IS_1_E_entering( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_E_entering(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_E_entering(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 East  Entering , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	int laneID = get_laneID( V );
+	if( laneID == 1 && IS_1_left_turn( EAST ) == 0 ) return;
 	// Check if this event is first in the queue
 	if( peek_from_list( get_lane_queue( IS_1, EAST, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_1_E_entering(): E is not first in queue\n"); exit(1);
@@ -780,19 +917,12 @@ static void IS_1_E_entering( void* P ) {
 
 static void IS_1_S_entering( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_S_entering(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_S_entering(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 South Entering , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	int laneID = get_laneID( V );
-	//printf("laneID: %d\n", laneID);
-	//printf("num2: %d\n", get_list_counter(get_lane_queue(IS_1, SOUTH, laneID)));
+	if( laneID == 1 && IS_1_left_turn( SOUTH ) == 0 ) return;
 	// Check if this event is first in the queue
-	Event test = peek_from_list( get_lane_queue( IS_1, SOUTH, laneID ) );
-	//printf("obj: %d")
 	if( peek_from_list( get_lane_queue( IS_1, SOUTH, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_1_S_entering(): E is not first in queue\n"); exit(1);
 	}
@@ -817,14 +947,11 @@ static void IS_1_S_entering( void* P ) {
 
 static void IS_1_W_entering( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_W_entering(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_W_entering(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 West  Entering , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	int laneID = get_laneID( V );
+	if( laneID == 1 && IS_1_left_turn( WEST ) == 0 ) return;
 	// Check if this event is first in the queue
 	if( peek_from_list( get_lane_queue( IS_1, WEST, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_1_W_entering(): E is not first in queue\n"); exit(1);
@@ -852,12 +979,8 @@ static void IS_1_W_entering( void* P ) {
 
 static void IS_1_N_crossing( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_N_crossing(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_N_crossing(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 North Crossing , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	double crossingDistance = 0;
 	switch( get_destination( V ) ) {
@@ -875,7 +998,7 @@ static void IS_1_N_crossing( void* P ) {
 			set_callback( E, IS_1_S_departure );
 			break;
 		}
-		case 202: // Left turnf
+		case 202: // Left turn
 		{
 			crossingDistance = get_crossing_distance( IS_1, NORTH, LEFT );
 			set_event_type( E, IS_1_E_DEPARTURE );
@@ -900,23 +1023,25 @@ static void IS_1_N_crossing( void* P ) {
 	schedule_event( E );
 
 	// Schedule entering event for following vehicle, if signal is still green
-	if( get_list_counter( get_lane_queue( IS_1, NORTH, laneID ) ) > 0
-	   && get_light( IS_1, NORTH, laneID ) == GREEN )
-	{
-		Event next = peek_from_list( get_lane_queue( IS_1, NORTH, laneID ) );
-		set_timestamp( next, get_sim_time() );
-		schedule_event( next );
+	if( get_list_counter( get_lane_queue( IS_1, NORTH, laneID ) ) > 0 ) {
+		Event nextEvent = peek_from_list( get_lane_queue( IS_1, NORTH, laneID ) );
+		if( get_light( IS_1, NORTH, laneID ) == GREEN ) {
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( laneID == 1 && IS_1_left_turn( NORTH ) == 0 ) ) {
+				set_timestamp( nextEvent, get_sim_time() );
+				schedule_event( nextEvent );
+			}
+		} else if( laneID == 3 && IS_1_red_right_turn( NORTH ) ) {
+			set_timestamp( nextEvent, get_sim_time() );
+			schedule_event( nextEvent );
+		} else ;
 	}
 }
 
 static void IS_1_E_crossing( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_E_crossing(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_E_crossing(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 East  Crossing , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	double crossingDistance = 0;
 	switch( get_destination( V ) ) {
@@ -957,23 +1082,25 @@ static void IS_1_E_crossing( void* P ) {
 	schedule_event( E );
 	
 	// Schedule entering event for following vehicle, if signal is still green
-	if( get_list_counter( get_lane_queue( IS_1, EAST, laneID ) ) > 0
-	   && get_light( IS_1, EAST, laneID ) == GREEN )
-	{
-		Event next = peek_from_list( get_lane_queue( IS_1, EAST, laneID ) );
-		set_timestamp( next, get_sim_time() );
-		schedule_event( next );
+	if( get_list_counter( get_lane_queue( IS_1, EAST, laneID ) ) > 0 ) {
+		Event nextEvent = peek_from_list( get_lane_queue( IS_1, EAST, laneID ) );
+		if( get_light( IS_1, EAST, laneID ) == GREEN ) {
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( laneID == 1 && IS_1_left_turn( EAST ) == 0 ) ) {
+				set_timestamp( nextEvent, get_sim_time() );
+				schedule_event( nextEvent );
+			}
+		} else if( laneID == 3 && IS_1_red_right_turn( EAST ) ) {
+			set_timestamp( nextEvent, get_sim_time() );
+			schedule_event( nextEvent );
+		} else ;
 	}
 }
 
 static void IS_1_S_crossing( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_S_crossing(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_S_crossing(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 South Crossing , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	double crossingDistance = 0;
 	switch( get_destination( V ) ) {
@@ -1014,23 +1141,25 @@ static void IS_1_S_crossing( void* P ) {
 	schedule_event( E );
 	
 	// Schedule entering event for following vehicle, if signal is still green
-	if( get_list_counter( get_lane_queue( IS_1, SOUTH, laneID ) ) > 0
-	   && get_light( IS_1, SOUTH, laneID ) == GREEN )
-	{
-		Event next = peek_from_list( get_lane_queue( IS_1, SOUTH, laneID ) );
-		set_timestamp( next, get_sim_time() );
-		schedule_event( next );
+	if( get_list_counter( get_lane_queue( IS_1, SOUTH, laneID ) ) > 0 ) {
+		Event nextEvent = peek_from_list( get_lane_queue( IS_1, SOUTH, laneID ) );
+		if( get_light( IS_1, SOUTH, laneID ) == GREEN ) {
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( laneID == 1 && IS_1_left_turn( SOUTH ) == 0 ) ) {
+				set_timestamp( nextEvent, get_sim_time() );
+				schedule_event( nextEvent );
+			}
+		} else if( laneID == 3 && IS_1_red_right_turn( SOUTH ) ) {
+			set_timestamp( nextEvent, get_sim_time() );
+			schedule_event( nextEvent );
+		} else ;
 	}
 }
 
 static void IS_1_W_crossing( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_W_crossing(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_W_crossing(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 West  Crossing , Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	double crossingDistance = 0;
 	switch( get_destination( V ) ) {
@@ -1071,12 +1200,18 @@ static void IS_1_W_crossing( void* P ) {
 	schedule_event( E );
 	
 	// Schedule entering event for following vehicle, if signal is still green
-	if( get_list_counter( get_lane_queue( IS_1, WEST, laneID ) ) > 0
-	   && get_light( IS_1, WEST, laneID ) == GREEN )
-	{
-		Event next = peek_from_list( get_lane_queue( IS_1, WEST, laneID ) );
-		set_timestamp( next, get_sim_time() );
-		schedule_event( next );
+	if( get_list_counter( get_lane_queue( IS_1, WEST, laneID ) ) > 0 ) {
+		Event nextEvent = peek_from_list( get_lane_queue( IS_1, WEST, laneID ) );
+		if( get_light( IS_1, WEST, laneID ) == GREEN ) {
+			// Don't enter if permitted left turn and there is traffic in opposite direction
+			if( ! ( laneID == 1 && IS_1_left_turn( WEST ) == 0 ) ) {
+				set_timestamp( nextEvent, get_sim_time() );
+				schedule_event( nextEvent );
+			}
+		} else if( laneID == 4 && IS_1_red_right_turn( WEST ) ) {
+			set_timestamp( nextEvent, get_sim_time() );
+			schedule_event( nextEvent );
+		} else ;
 	}
 }
 
@@ -1084,35 +1219,41 @@ static void IS_1_W_crossing( void* P ) {
 
 static void IS_1_N_departure( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_N_departure(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_N_departure(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 North Departure, Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	// Remove vehicle from intersection counter
-	Direction from;
-	switch(get_origin(V)) {
+	switch( get_origin( V ) ) {
 		case 101: // coming from SOUTH
 		{
-			from = SOUTH;
+			change_lane_counter( IS_1, SOUTH, get_laneID(V), -1 );
+			// Coming from SOUTH we could have blocked permitted NORTH left turn vehicles
+			if( IS_1_left_turn( NORTH ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, NORTH, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 			break;
 		}
 		case 102: // coming from EAST
 		{
-			from = EAST;
+			change_lane_counter( IS_1, EAST, get_laneID(V), -1 );
+			// Coming from EAST we could have blocked permitted WEST left turn vehicles
+			if( IS_1_left_turn( SOUTH ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, SOUTH, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 			break;
 		}
 		case 123: // coming from WEST
 		{
-			from = WEST;
+			change_lane_counter( IS_1, WEST, get_laneID(V), -1 );
 			break;
 		}
 		default:
 			fprintf(stderr,"Error from IS_1_N_departure(): Unexpected origin\n"); exit(1);
 	}
-	change_lane_counter( IS_1, from, get_laneID(V), -1 );
 	set_temp_distance( V, 0.0 );
 	
 	/*
@@ -1122,116 +1263,158 @@ static void IS_1_N_departure( void* P ) {
 	
 	// TEST schedule global departure TEST
 	set_event_type( E, GLOBAL_DEPARTURE );
-	set_callback( E, global_departure );
+	set_callback  ( E, global_departure );
 	schedule_event( E );
+	
+	if( IS_1_red_right_turn( EAST ) ) {
+		Event XY = peek_from_list( get_lane_queue( IS_1, EAST, 3 ) );
+		set_timestamp( XY, get_sim_time() );
+		schedule_event( XY );
+	}
 }
 
 static void IS_1_E_departure( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_E_departure(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_E_departure(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 East  Departure, Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	// Remove vehicle from intersection counter
-	Direction from;
-	switch(get_origin(V)) {
+	switch( get_origin( V ) ) {
 		case 101: // coming from SOUTH
 		{
-			from = SOUTH;
+			change_lane_counter( IS_1, SOUTH, get_laneID(V), -1 );
+			// Coming from SOUTH we could have blocked permitted NORTH left turn vehicles
+			if( IS_1_left_turn( NORTH ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, NORTH, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 			break;
 		}
 		case 123: // coming from WEST
 		{
-			from = WEST;
+			change_lane_counter( IS_1, WEST, get_laneID(V), -1 );
+			// Coming from WEST we could have blocked permitted EAST left turn vehicles
+			if( IS_1_left_turn( EAST ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, EAST, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 			break;
 		}
 		default:  // coming from NORTH
 		{
-			from = NORTH;
+			change_lane_counter( IS_1, NORTH, get_laneID(V), -1 );
 		}
 	}
-	change_lane_counter( IS_1, from, get_laneID(V), -1 );
 	set_temp_distance( V, 0.0 );
 	
 	// Schedule global departure
 	set_event_type( E, GLOBAL_DEPARTURE );
-	set_callback( E, global_departure );
+	set_callback  ( E, global_departure );
 	schedule_event( E );
+
+	if( IS_1_red_right_turn( SOUTH ) ) {
+		Event entering = peek_from_list( get_lane_queue( IS_1, SOUTH, 3 ) );
+		set_timestamp( entering, get_sim_time() );
+		schedule_event( entering );
+	}
 }
 
 static void IS_1_S_departure( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_S_departure(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_S_departure(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 South Departure, Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	// Remove vehicle from intersection counter
-	Direction from;
-	switch(get_origin(V)) {
+	switch( get_origin( V ) ) {
 		case 102: // coming from EAST
 		{
-			from = EAST;
+			change_lane_counter( IS_1, EAST, get_laneID(V), -1 );
 			break;
 		}
 		case 123: // coming from WEST
 		{
-			from = WEST;
+			change_lane_counter( IS_1, WEST, get_laneID(V), -1 );
+			// Coming from WEST we could have blocked permitted EAST left turn vehicles
+			if( IS_1_left_turn( EAST ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, EAST, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 			break;
 		}
 		default:  // coming from NORTH
 		{
-			from = NORTH;
+			change_lane_counter( IS_1, NORTH, get_laneID(V), -1 );
+			// Coming from NORTH we could have blocked permitted SOUTH left turn vehicles
+			if( IS_1_left_turn( SOUTH ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, SOUTH, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 		}
 	}
-	change_lane_counter( IS_1, from, get_laneID(V), -1 );
 	set_temp_distance( V, 0.0 );
 	
 	// Schedule global departure
 	set_event_type( E, GLOBAL_DEPARTURE );
-	set_callback( E, global_departure );
+	set_callback  ( E, global_departure );
 	schedule_event( E );
+
+	if( IS_1_red_right_turn( WEST ) ) {
+		Event entering = peek_from_list( get_lane_queue( IS_1, WEST, 4 ) );
+		set_timestamp( entering, get_sim_time() );
+		schedule_event( entering );
+	}
 }
 
 static void IS_1_W_departure( void* P ) {
 	Event E = (Event) P;
-	if( E == NULL ) { fprintf(stderr,"Error from IS_1_W_departure(): E is NULL\n"); exit(1); }
+	check_and_print_vehicle_event( E );
 	Vehicle V = get_object( E );
-	if( V == NULL ) { fprintf(stderr,"Error from IS_1_W_departure(): V is NULL\n"); exit(1); }
-	
-	printf("%6.2f, IS 1 West  Departure, Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n",
-		   get_sim_time(), get_id(V), get_origin(V), get_destination(V) );
 	
 	// Remove vehicle from intersection counter
-	Direction from;
-	switch(get_origin(V)) {
+	switch( get_origin( V ) ) {
 		case 101: // coming from SOUTH
 		{
-			from = SOUTH;
+			change_lane_counter( IS_1, SOUTH, get_laneID(V), -1 );
 			break;
 		}
 		case 102: // coming from EAST
 		{
-			from = EAST;
+			change_lane_counter( IS_1, EAST, get_laneID(V), -1 );
+			// Coming from EAST we could have blocked permitted WEST left turn vehicles
+			if( IS_1_left_turn( WEST ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, WEST, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 			break;
 		}
 		default:  // coming from NORTH
 		{
-			from = NORTH;
+			change_lane_counter( IS_1, NORTH, get_laneID(V), -1 );
+			// Coming from NORTH we could have blocked permitted SOUTH left turn vehicles
+			if( IS_1_left_turn( SOUTH ) == 1 ) {
+				Event entering = peek_from_list( get_lane_queue( IS_1, SOUTH, 1 ) );
+				set_timestamp( entering, get_sim_time() );
+				schedule_event( entering );
+			}
 		}
 	}
-	change_lane_counter( IS_1, from, get_laneID(V), -1 );
 	set_temp_distance( V, 0.0 );
 	
 	// Schedule global departure
 	set_event_type( E, GLOBAL_DEPARTURE );
-	set_callback( E, global_departure );
+	set_callback  ( E, global_departure );
 	schedule_event( E );
+
+	if( IS_1_red_right_turn( NORTH ) ) {
+		Event entering = peek_from_list( get_lane_queue( IS_1, NORTH, 3 ) );
+		set_timestamp( entering, get_sim_time() );
+		schedule_event( entering );
+	}
 }
 
 /* ======================================================================================== *\

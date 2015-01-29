@@ -19,6 +19,11 @@ extern double get_timestamp( queueElement E );
 // Returns callback function of an element
 // Has to be provided by user
 extern cbptr get_callback( queueElement E );
+// Flag that indicates if an element has already been scheduled
+// 0: not scheduled yet
+// 1: already scheduled
+extern int set_scheduled( queueElement E, int value );
+extern int get_scheduled( queueElement E );
 
 /**
  * Sets up simulation state variables and data structures

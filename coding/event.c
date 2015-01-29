@@ -13,6 +13,7 @@
 
 struct EventType {
 	double timestamp;
+	int scheduled;
 	void *object;
 	TypeOfObject objectType;
 	TypeOfEvent eventType;
@@ -24,6 +25,7 @@ Event create_event() {
 	if( E == NULL ) {
 		fprintf(stderr, "ERROR from create_event(): malloc() failed\n"); exit(1);
 	}
+	E->scheduled = 0;
 	E->object = NULL;
 	E->callback = NULL;
 	return E;
@@ -51,6 +53,17 @@ double get_timestamp( void* P ) {
 	Event E = (Event) P;
 	if( E == NULL ) return -1;
 	return E->timestamp;
+}
+
+int set_scheduled( void *P, int value ) {
+	Event E = (Event) P;
+	E->scheduled = value;
+	return 0;
+}
+
+int get_scheduled( void *P ) {
+	Event E = (Event) P;
+	return E->scheduled;
 }
 
 int set_object( Event E, void *object ) {

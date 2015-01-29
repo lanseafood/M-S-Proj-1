@@ -27,23 +27,25 @@ struct IntersectionType {
 	int **laneCounters;
 	// Crossing distance: distance in ft to cross intersection
 	double **crossingDistances;
-	// Number of lanes for each direction
+	// Number of lanes for each direction N-E-S-W
 	int numLanes[4];
 	
-	// Wait times
-	// .. //
+	// Traffic lights
+	// direction(4) x numLanes x maxPhase
+	int ***signalStatus;
+	
+	// Indicates protected / permitted intervals for each signal phase
+	// protected = 0: permitted interval (watch out for opposing traffic)
+	// protected = 1: dedicated left turn lights are green (no opposing traffic)
+	int *protected;
 
-	// Traffic Signals
-	int ***signalStatus; // direction(4) x numLanes x maxPhase
 	double *phaseLengths;
 	double totalPhaseLength;
 	int maxPhase;
 	int currPhase;
-
-	// Distance traveling in either direction (going straight)
-	// -- will be replaced by crossingDistances
-	double ns_len;
-	double ew_len;
+	
+	// Wait times
+	// .. //
 };
 
 // Allocate and initialize queues, lane flags and lane counter
@@ -67,120 +69,132 @@ Intersection create_intersection(int zoneID) {
 	if( zoneID == 1 ) {
 		I->numLanes[NORTH] = 3; I->numLanes[EAST] = 3;
 		I->numLanes[SOUTH] = 3; I->numLanes[WEST] = 4;
-		I->maxPhase = 9;
-		I->ns_len = 99.73; I->ew_len = 106;
+		I->maxPhase = 12;
 	} else if( zoneID == 2 ) {
 		I->numLanes[NORTH] = 3; I->numLanes[EAST] = 1;
 		I->numLanes[SOUTH] = 2; I->numLanes[WEST] = 2;
-		I->maxPhase = 5;
-		I->ns_len = 129.88; I->ew_len = 95;
+		I->maxPhase = 9;
 	} else if( zoneID == 3 ) {
 		I->numLanes[NORTH] = 3; I->numLanes[EAST] = 1;
 		I->numLanes[SOUTH] = 3; I->numLanes[WEST] = 2;
-		I->maxPhase = 5;
-		I->ns_len = 73.51; I->ew_len = 102;
+		I->maxPhase = 6;
 	} else if( zoneID == 4 ) {
 		I->numLanes[NORTH] = 2; I->numLanes[EAST] = 1;
 		I->numLanes[SOUTH] = 3; I->numLanes[WEST] = 0;
 		I->maxPhase = 0;
-		I->ns_len = 66.60; I->ew_len = 80;
 	} else if( zoneID == 5 ) {
 		I->numLanes[NORTH] = 3; I->numLanes[EAST] = 2;
 		I->numLanes[SOUTH] = 3; I->numLanes[WEST] = 2;
 		I->maxPhase = 5;
-		I->ns_len = 121.32; I->ew_len = 82;
-	} else exit(1);
+	} else { fprintf(stderr,"Error from create_intersection(): invalid zoneID\n"); exit(1); }
 	
 	set_up_lanes( I );
+	const int P = I->maxPhase;
 	
 	if (zoneID==1) {
+		//                                               RIGHT STRAIGHT  LEFT
+		memcpy(I->crossingDistances[NORTH],((double[3]){ 99.73,  99.73,  99.73}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 99.73,  99.73,  99.73}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
+
+		memcpy(I->protected   ,((int    [12])     {   1,  1,  0,   0,  0,  0,  1,  1,  0,   0,  0,  0 }),P*sizeof(int));
+		memcpy(I->phaseLengths,((double [12])     { 7.0,3.6,2.4,34.9,3.8,2.4,8.0,2.4,2.4,30.0,3.2,2.4 }),P*sizeof(double));
 		
-		// Set crossing distances (j: Right-Straight-Left) for each direction
-		// -- cannot use laneID here!
-		for( int j = 0; j < 3; j++ ) {
-			// Later:
-			// I->crossingDistances[NORTH][   RIGHT] = I->ns_len;
-			// I->crossingDistances[NORTH][STRAIGHT] = I->ns_len;
-			// I->crossingDistances[NORTH][    LEFT] = I->ns_len;
-			I->crossingDistances[NORTH][j] = I->ns_len;
-			I->crossingDistances[ EAST][j] = I->ew_len;
-			I->crossingDistances[SOUTH][j] = I->ns_len;
-			I->crossingDistances[ WEST][j] = I->ew_len;
-		}
+		memcpy(I->signalStatus[NORTH][0],((int [12]){ G,  Y,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int)); // LEFT TURN
+		memcpy(I->signalStatus[NORTH][1],((int [12]){ R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][2],((int [12]){ R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
 		
-		I->phaseLengths = (double   *) malloc(I->maxPhase*sizeof(double));
-		memcpy(I->phaseLengths,((double [9])    { 34.9,  3.8, 7.0, 3.6, 8.0, 2.4, 7.1, 30.0,  3.2 }), 9*sizeof(double));
+		memcpy(I->signalStatus[SOUTH][0],((int [12]){ G,  Y,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int)); // LEFT TURN
+		memcpy(I->signalStatus[SOUTH][1],((int [12]){ R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][2],((int [12]){ R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[NORTH][0],((int [9]){ G,    G,   G,   Y,   R,   R,   R,    R,    R }), 9*sizeof(int)); // LEFT TURN
-		memcpy(I->signalStatus[NORTH][1],((int [9]){ G,    Y,   R,   R,   R,   R,   R,    R,    R }), 9*sizeof(int));
-		memcpy(I->signalStatus[NORTH][2],((int [9]){ G,    Y,   R,   R,   R,   R,   R,    R,    R }), 9*sizeof(int));
+		memcpy(I->signalStatus[ EAST][0],((int [12]){ R,  R,  R,   R,  R,  R,  G,  Y,  R,   G,  Y,  R }),P*sizeof(int)); // LEFT TURN
+		memcpy(I->signalStatus[ EAST][1],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[ EAST][2],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[SOUTH][0],((int [9]){ G,    G,   G,   Y,   R,   R,   R,    R,    R }), 9*sizeof(int)); // LEFT TURN
-		memcpy(I->signalStatus[SOUTH][2],((int [9]){ G,    Y,   R,   R,   R,   R,   R,    R,    R }), 9*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][2],((int [9]){ G,    Y,   R,   R,   R,   R,   R,    R,    R }), 9*sizeof(int));
+		memcpy(I->signalStatus[ WEST][0],((int [12]){ R,  R,  R,   R,  R,  R,  G,  Y,  R,   G,  Y,  R }),P*sizeof(int)); // LEFT TURN
+		memcpy(I->signalStatus[ WEST][1],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[ WEST][2],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[ WEST][3],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ EAST][0],((int [9]){ R,    R,   R,   R,   G,   G,   G,    G,    Y }), 9*sizeof(int)); // LEFT TURN
-		memcpy(I->signalStatus[ EAST][1],((int [9]){ R,    R,   R,   R,   R,   R,   R,    G,    Y }), 9*sizeof(int));
-		memcpy(I->signalStatus[ EAST][2],((int [9]){ R,    R,   R,   R,   R,   R,   R,    G,    Y }), 9*sizeof(int));
-		
-		memcpy(I->signalStatus[ WEST][0],((int [9]){ R,    R,   R,   R,   G,   G,   G,    G,    Y }), 9*sizeof(int)); // LEFT TURN
-		memcpy(I->signalStatus[ WEST][1],((int [9]){ R,    R,   R,   R,   R,   R,   R,    G,    Y }), 9*sizeof(int));
-		memcpy(I->signalStatus[ WEST][2],((int [9]){ R,    R,   R,   R,   R,   R,   R,    G,    Y }), 9*sizeof(int));
-		memcpy(I->signalStatus[ WEST][3],((int [9]){ R,    R,   R,   R,   R,   R,   R,    G,    Y }), 9*sizeof(int));
 		
 	}
 	else if (zoneID==2) {
+		//                                               RIGHT STRAIGHT  LEFT
+		memcpy(I->crossingDistances[NORTH],((double[3]){129.88, 129.88, 129.88}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){129.88, 129.88, 129.88}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
 		
-		I->phaseLengths = (double   *) malloc(I->maxPhase*sizeof(double));
-		memcpy(I->phaseLengths,((double [5])        {  41.5,    3.2,   31.5,   20.3,    3.6}),5*sizeof(double));
+		memcpy(I->protected   ,((int    [9])        {    1,    0,   0,    1,   1,   0,    0,   0,   0 }),P*sizeof(int));
+		memcpy(I->phaseLengths,((double [9])        { 18.3, 23.2, 3.2, 15.1, 3.2, 5.0, 20.3, 3.6, 5.0 }),P*sizeof(double));
 		
-		memcpy(I->signalStatus[NORTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[NORTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[NORTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[NORTH][0],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][1],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][2],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[SOUTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][0],((int [9]) {    R,    G,   G,    G,   Y,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][1],((int [9]) {    R,    G,   G,    G,   Y,   R,    R,   R,   R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ EAST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[ EAST][0],((int [9]) {    R,    R,   R,    R,   R,   R,    G,   Y,   R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ WEST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[ WEST][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[ WEST][0],((int [9]) {    R,    R,   R,    R,   R,   R,    G,   Y,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[ WEST][1],((int [9]) {    R,    R,   R,    R,   R,   R,    G,   Y,   R }),P*sizeof(int));
 	}
 	else if (zoneID==3) {
+		//                                               RIGHT STRAIGHT  LEFT
+		memcpy(I->crossingDistances[NORTH],((double[3]){ 73.51,  73.51,  73.51}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 73.51,  73.51,  73.51}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){102.00, 102.00, 102.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){102.00, 102.00, 102.00}),3*sizeof(double));
 		
-		memcpy(I->phaseLengths,((double [5])        {  61.2,    3.2,    4.8,   27.3,    3.6}),5*sizeof(double));
+		memcpy(I->protected   ,((int    [9])        {    0,   0,   0,    0,   0,   0 }),5*sizeof(int));
+		memcpy(I->phaseLengths,((double [6])        {  61.2,    3.2, 2.4,  27.3,    3.6, 2.4 }),5*sizeof(double));
 		
-		memcpy(I->signalStatus[NORTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[NORTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[NORTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[NORTH][0],((int [6]) { GREEN, YELLOW, RED,   RED,    RED, RED }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][1],((int [6]) { GREEN, YELLOW, RED,   RED,    RED, RED }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][2],((int [6]) { GREEN, YELLOW, RED,   RED,    RED, RED }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[SOUTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][0],((int [6]) { GREEN, YELLOW, RED,   RED,    RED, RED }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][1],((int [6]) { GREEN, YELLOW, RED,   RED,    RED, RED }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][2],((int [6]) { GREEN, YELLOW, RED,   RED,    RED, RED }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ EAST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[ EAST][0],((int [6]) {   RED,    RED, RED, GREEN, YELLOW, RED }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ WEST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[ WEST][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[ WEST][0],((int [6]) {   RED,    RED, RED, GREEN, YELLOW, RED }),P*sizeof(int));
+		memcpy(I->signalStatus[ WEST][1],((int [6]) {   RED,    RED, RED, GREEN, YELLOW, RED }),P*sizeof(int));
 		
 	}
 	else if (zoneID==4) {
+		//                                               RIGHT STRAIGHT  LEFT
+		memcpy(I->crossingDistances[NORTH],((double[3]){ 66.60,  66.60,  66.60}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 66.60,  66.60,  66.60}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){ 80.00,   0.00,  80.00}),3*sizeof(double));
 	}
 	else if (zoneID==5) {
-		memcpy(I->phaseLengths,((double [5])        {   0.0,    0.0,    0.0,    0.0,    0.0}),5*sizeof(double));
+		//                                               RIGHT STRAIGHT  LEFT
+		memcpy(I->crossingDistances[NORTH],((double[3]){121.32, 121.32, 121.32}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){121.32, 121.32, 121.32}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){ 82.00,  82.00,  82.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){ 82.00,  82.00,  82.00}),3*sizeof(double));
 		
-		memcpy(I->signalStatus[NORTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[NORTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[NORTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		// TODO: INTERSECTION 5 TIMING
+		memcpy(I->protected   ,((int    [9])        {     0,      0,      0,      0,      0}),P*sizeof(int));
+		memcpy(I->phaseLengths,((double [5])        {   0.0,    0.0,    0.0,    0.0,    0.0}),P*sizeof(double));
 		
-		memcpy(I->signalStatus[SOUTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[NORTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ EAST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ WEST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
-		memcpy(I->signalStatus[ WEST][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),5*sizeof(int));
+		memcpy(I->signalStatus[ EAST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		
+		memcpy(I->signalStatus[ WEST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[ WEST][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
 		
 	} else ;
 	
@@ -238,31 +252,32 @@ Color get_light(Intersection I, Direction D, int laneID) {
 	return I->signalStatus[D][laneID-1][get_currPhase(I)];
 }
 
-double get_ns_len(Intersection I) {
-	return I->ns_len;
-}
-
-double get_ew_len(Intersection I) {
-	return I->ew_len;
+int get_protected(Intersection I) {
+	return I->protected[I->currPhase];
 }
 
 LinkedList get_lane_queue( Intersection I, Direction D, int laneID ) {
 	return I->laneQueues[D][laneID-1];
 }
+
 int set_lane_flag( Intersection I, Direction D, int laneID, int flag ) {
 	I->laneFlags[D][laneID-1] = flag;
 	return 0;
 }
+
 int get_lane_flag( Intersection I, Direction D, int laneID ) {
 	return I->laneFlags[D][laneID-1];
 }
+
 int change_lane_counter( Intersection I, Direction D, int laneID, int val ) {
 	I->laneCounters[D][laneID-1] += val;
 	return 0;
 }
+
 int get_lane_counter( Intersection I, Direction D, int laneID ) {
 	return I->laneCounters[D][laneID-1];
 }
+
 double get_crossing_distance( Intersection I, Direction D, Route R ) {
 	return I->crossingDistances[D][R];
 }
@@ -285,6 +300,7 @@ static void set_up_lanes( Intersection I ) {
 			I->signalStatus[i][j] = (int *) malloc(I->maxPhase*sizeof(int));
 		}
 	}
+	I->protected    = (int    *) malloc(I->maxPhase*sizeof(int   ));
 	I->phaseLengths = (double *) malloc(I->maxPhase*sizeof(double));
 }
 
