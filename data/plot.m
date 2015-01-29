@@ -18,7 +18,7 @@ set term postscript eps enhanced color
 set output "data.eps"
 
 # Plot data file
-plot '< sort -n -r -k2 data' u 2 with points ps 0.4 pt 5 notitle
+plot '< sort -n -r -k2 inter-arrival-time.dat' u 2 with points ps 0.4 pt 5 notitle
 
 # Clean gnuplot settings
 unset xrange
