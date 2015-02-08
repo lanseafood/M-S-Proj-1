@@ -180,21 +180,25 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->crossingDistances[ WEST],((double[3]){ 82.00,  82.00,  82.00}),3*sizeof(double));
 		
 		// TODO: INTERSECTION 5 TIMING
-		memcpy(I->protected   ,((int    [9])        {     0,      0,      0,      0,      0}),P*sizeof(int));
-		memcpy(I->phaseLengths,((double [5])        {   0.0,    0.0,    0.0,    0.0,    0.0}),P*sizeof(double));
+		memcpy(I->protected   ,((int    [9])        {    0,    0,   1,    1,   0,   1,    1,   0,   0 }),P*sizeof(int));
+		memcpy(I->phaseLengths,((double [9])        { 34.6, 3.2, 8.8, 2.7, 1.8, 9, 3.6, 32.7, 3.7 }),P*sizeof(double));
 		
-		memcpy(I->signalStatus[NORTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
-		memcpy(I->signalStatus[NORTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
-		memcpy(I->signalStatus[NORTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][0],((int [9]) {    G,    G,   G,    Y,   R,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][1],((int [9]) {    G,    Y,   R,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][2],((int [9]) {    G,    Y,   R,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[SOUTH][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][2],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][0],((int [9]) {    G,    G,   G,    Y,   R,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][1],((int [9]) {    G,    Y,   R,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ EAST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[ EAST][0],((int [9]) {    R,    R,   R,    R,   R,   R,    R,   G,   Y }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[ WEST][0],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
-		memcpy(I->signalStatus[ WEST][1],((int [5]) {   RED,    RED,    RED,    RED,    RED}),P*sizeof(int));
+		memcpy(I->signalStatus[ WEST][0],((int [9]) {    R,    R,   R,    R,   R,   R,    G,   Y,   G }),P*sizeof(int));
+		memcpy(I->signalStatus[ WEST][1],((int [9]) {    R,    R,   R,    R,   R,   G,    Y,   G,   G }),P*sizeof(int));
+
+
+
+
+
 		
 	} else ;
 	
