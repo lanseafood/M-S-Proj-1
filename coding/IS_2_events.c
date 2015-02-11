@@ -27,7 +27,7 @@ static int IS_2_choose_route_and_lane( Direction dir, int dest, Vehicle V ) {
 		case EAST:
 		{
 			laneID = 1;
-			if( dest == 222 )      { set_route( V, STRAIGHT ); set_departDir( V, WEST ); }
+			if( dest == 222 ) { set_route( V, STRAIGHT ); set_departDir( V, WEST ); }
 			else if( dest <= 202 || dest == 223 ) { set_route( V, LEFT ); set_departDir( V, SOUTH ); }
 			else { set_route( V, RIGHT ); set_departDir( V, NORTH ); }
 			break;
@@ -62,7 +62,7 @@ static int IS_2_red_right_turn( Direction D ) {
 	if( get_lane_flag( IS_2, D, rightTurnLane ) == 1 ) return 0;
 	
 	Event E = peek_from_list( get_lane_queue( IS_2, D, rightTurnLane ) );
-	if( get_scheduled(E) == 1 ) return 0;
+	if( get_scheduled( E ) == 1 ) return 0;
 	Vehicle V = get_object( E );
 	if( get_route( V ) != RIGHT ) return 0;
 	
@@ -108,7 +108,7 @@ static int IS_2_left_turn( Direction D ) {
 	if( get_list_counter( get_lane_queue( IS_2, D, 1 ) ) == 0 ) return 0;
 	
 	Event E = peek_from_list( get_lane_queue( IS_2, D, 1 ) );
-	if( get_scheduled(E) == 1 ) return 0;
+	if( get_scheduled( E ) == 1 ) return 0;
 	Vehicle V = get_object( E );
 	if( get_route( V ) != LEFT ) return 0;
 	
@@ -190,9 +190,10 @@ static void IS_2_entering( void* P ) {
 	Vehicle V = get_object( E );
 	Direction dir = get_dir( V );
 	int laneID = get_laneID( V );
-	if( get_route( V ) == LEFT && IS_2_left_turn( dir ) == 0 ) return;
-	if( get_departDir( V ) == NORTH && get_congestion_flag( S_3, NORTH ) ) return;
-	if( get_departDir( V ) == SOUTH && get_congestion_flag( S_2, SOUTH ) ) return;
+	
+	if( get_route( V ) == LEFT && IS_2_left_turn( dir ) == 0 ) { set_velocity( V, 0.0 ); return; }
+	if( get_departDir( V ) == NORTH && get_congestion_flag( S_3, NORTH ) ) { set_velocity( V, 0.0 ); return; }
+	if( get_departDir( V ) == SOUTH && get_congestion_flag( S_2, SOUTH ) ) { set_velocity( V, 0.0 ); return; }
 	// Check if this event is first in the queue
 	if( peek_from_list( get_lane_queue( IS_2, dir, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_2_entering(): E is not first in queue\n"); exit(1);
@@ -252,8 +253,10 @@ static void IS_2_crossing( void* P ) {
 		if( get_light( IS_2, dir, laneID ) != RED ) {
 			// Don't enter if permitted left turn and there is traffic in opposite direction
 			if( ! ( get_route( V ) == LEFT && IS_2_left_turn( dir ) == 0 ) ) {
-				set_timestamp( nextEvent, get_sim_time() );
-				schedule_event( nextEvent );
+				if( !(get_scheduled( nextEvent )) ) {
+					set_timestamp( nextEvent, get_sim_time() );
+					schedule_event( nextEvent );
+				}
 			}
 		} else if( laneID == get_numLanes( IS_2 )[dir] && IS_2_red_right_turn( dir ) ) {
 			set_timestamp( nextEvent, get_sim_time() );

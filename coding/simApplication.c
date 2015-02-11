@@ -34,6 +34,7 @@ int (*compare_to)( void*, void* );
 
 // Intersections
 static Intersection IS_1, IS_2, IS_3, IS_4, IS_5;
+Intersection IS_pointer[5];
 
 // Road sections between intersections (Peachtree St NE)
 static Section S_1, S_2, S_3, S_4, S_5, S_6;
@@ -53,19 +54,19 @@ static int destinations[11] =
 // Origin and destination probabilities
 static double p_origins[11] =
 //-101- -102- -103- -106- -112- -113- -114- -115- -121- -122- -123-
-{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.20, 0.20 };
+{ 0.20, 0.10, 0.10, 0.20, 0.00, 0.00, 0.00, 0.00, 0.20, 0.10, 0.10 };
 static double p_destinations[11][11] =
 {
 //    -201- -202- -203- -206- -212- -213- -214- -215- -221- -222- -223-
-	{ 0.00, 0.25, 0.25, 0.00, 0.00, 0.00, 0.25, 0.00, 0.00, 0.00, 0.25 }, // origin 101
-	{ 0.25, 0.00, 0.25, 0.00, 0.00, 0.00, 0.25, 0.00, 0.00, 0.00, 0.25 }, // origin 102
-	{ 0.20, 0.20, 0.00, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.20, 0.20 }, // origin 103
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 106
+	{ 0.00, 0.20, 0.20, 0.10, 0.00, 0.00, 0.20, 0.00, 0.10, 0.00, 0.20 }, // origin 101
+	{ 0.20, 0.00, 0.20, 0.10, 0.00, 0.00, 0.20, 0.00, 0.10, 0.00, 0.20 }, // origin 102
+	{ 0.20, 0.10, 0.00, 0.10, 0.00, 0.00, 0.20, 0.00, 0.10, 0.20, 0.10 }, // origin 103
+	{ 0.20, 0.10, 0.10, 0.00, 0.00, 0.00, 0.20, 0.00, 0.20, 0.10, 0.10 }, // origin 106
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 112
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 113
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 114
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 115
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 121
+	{ 0.20, 0.10, 0.10, 0.20, 0.00, 0.00, 0.20, 0.00, 0.00, 0.10, 0.10 }, // origin 121
 	{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.00, 0.20 }, // origin 122
 	{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.20, 0.00 }  // origin 123
 };
@@ -174,13 +175,14 @@ static void IS_5_entering ( void* P );
 static void IS_5_crossing ( void* P );
 static void IS_5_departure( void* P );
 
+/*
 static void (*IS_ENTER[5])(void *) = {
 	IS_1_entering, IS_2_entering, IS_3_entering, IS_4_entering, IS_5_entering
 };
 
 static TypeOfEvent IS_ENTER_EVENTS[5] = {
 	IS_1_ENTERING, IS_2_ENTERING, IS_3_ENTERING, IS_4_ENTERING, IS_5_ENTERING
-};
+};*/
 
 /* --------------------------------------------------------------------------------------- */
 /* ======================================================================================= */
@@ -191,11 +193,11 @@ void create_sim( double simEnd ) {
 	compare_to = compare_events;
 	
 	// Create Intersections
-	IS_1 = create_intersection( 1 );
-	IS_2 = create_intersection( 2 );
-	IS_3 = create_intersection( 3 );
-	IS_4 = create_intersection( 4 );
-	IS_5 = create_intersection( 5 );
+	IS_1 = create_intersection( 1 ); IS_pointer[0] = IS_1;
+	IS_2 = create_intersection( 2 ); IS_pointer[1] = IS_2;
+	IS_3 = create_intersection( 3 ); IS_pointer[2] = IS_3;
+	IS_4 = create_intersection( 4 ); IS_pointer[3] = IS_4;
+	IS_5 = create_intersection( 5 ); IS_pointer[4] = IS_5;
 
 	// Create Sections
 	S_1 = create_section( 1, VHL, SDQ );
@@ -223,14 +225,14 @@ void create_sim( double simEnd ) {
 	#endif
 	printf( "---------------------------------------------------------\n");
 	
-	/* Use new random seed for simulation (other than for signal initialization) */
+	/* Use a new random seed for event simulation (other than for signal initialization) */
 	/*
 	struct timeval t1;
 	gettimeofday(&t1, NULL);
 	int seed = (int)(t1.tv_usec * t1.tv_sec);
 	srand(seed);
 	*/
-	 
+	
 	// Initialize and schedule first event (global arrival)
 	Event firstArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
 	schedule_event( firstArrival );
@@ -338,7 +340,7 @@ static void check_and_print_vehicle_event( Event E ) {
 	if( V == NULL ) { fprintf(stderr,"Error from %s: V is NULL\n", event); exit(1); }
 	#if VERBOSE == 1
 		printf("%7.2f, %-20s, Vehicle ID: %3d, Origin Zone: %d, Destination Zone %d\n"
-		   , get_sim_time(), event, get_id(V), get_origin(V), get_destination(V) );
+			   , get_sim_time(), event, get_id(V), get_origin(V), get_destination(V) );
 	#endif
 }
 
@@ -511,39 +513,38 @@ static void IS_signal( void* P ) {
 	int ID = get_inter_zoneID( I );
 	if( I == NULL ) { fprintf(stderr,"Error from IS_signal(): I is NULL\n"); exit(1); }
 	#if VERBOSE == 1
-		printf("%7.2f, Intersection %d Signal Event; ", get_sim_time(), ID );
+		printf( "%7.2f, Intersection %d Signal Event; ", get_sim_time(), ID );
 	#endif
 	
 	// Get intersection fields
-	int ***signalStatus = get_signalStatus(I);
-	double *phaseLengths = get_phaseLengths(I);
-	int maxPhase = get_maxPhase(I);
-	int *numLanes = get_numLanes(I);
-	LinkedList **laneQueues = get_laneQueues(I);
+	int ***signalStatus = get_signalStatus( I );
+	double *phaseLengths = get_phaseLengths( I );
+	int maxPhase = get_maxPhase( I );
+	int *numLanes = get_numLanes( I );
+	LinkedList **laneQueues = get_laneQueues( I );
 	
 	// Update to next phase & change appropriate signals
-	int oldPhase = get_currPhase(I);
+	int oldPhase = get_currPhase( I );
 	set_next_phase(I);
-	int currPhase = get_currPhase(I);
+	int currPhase = get_currPhase( I );
 	#if VERBOSE == 1
 		printf("old phase: %2d, new phase: %2d, phaseLength: %5.2f\n",
 		   oldPhase, currPhase, phaseLengths[currPhase]);
 	#endif
 	// Schedule next signal event
-	set_timestamp(E, get_sim_time() + phaseLengths[currPhase]);
-	schedule_event(E);
+	set_timestamp( E, get_sim_time() + phaseLengths[currPhase] );
+	schedule_event( E );
 
 	// Schedule entering events for vehicles
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < numLanes[i]; j++) {
-			if ( signalStatus[i][j][currPhase] == GREEN && signalStatus[i][j][oldPhase] == RED ) {
-				if ( get_list_counter(laneQueues[i][j]) > 0 && get_lane_flag(I, i, j) == 0 ) {
-					Event newEvent = peek_from_list(laneQueues[i][j]);
-					set_timestamp(newEvent, get_sim_time()); // INCLUDE START UP DELAY ? -> SUD
-					
-					set_event_type(newEvent, IS_ENTER_EVENTS[ID-1]);
-					set_callback  (newEvent, IS_ENTER       [ID-1]);
-					schedule_event( newEvent );
+	for( int i = 0; i < 4; i++ ) {
+		for( int j = 0; j < numLanes[i]; j++ ) {
+			if( signalStatus[i][j][currPhase] == GREEN && signalStatus[i][j][oldPhase] == RED ) {
+				if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j ) == 0 ) {
+					Event newEvent = peek_from_list( laneQueues[i][j] );
+					if( !(get_scheduled( newEvent )) ) {
+						set_timestamp( newEvent, get_sim_time() + SUD );
+						schedule_event( newEvent );
+					}
 				}
 			}
 		}
@@ -598,54 +599,28 @@ static void IS_signal( void* P ) {
 
 
 void section_clear( int ID, Direction D ) {
-	switch( ID ) {
-		case 2:
-		{
-			if( D == SOUTH ) {
-				// IS 2 departDir SOUTH
-				
+	Intersection I = IS_pointer[ID-1];
+	// Get intersection fields
+	int ***signalStatus = get_signalStatus( I );
+	int *numLanes = get_numLanes( I );
+	LinkedList **laneQueues = get_laneQueues( I );
+	int currPhase = get_currPhase( I );
+	
+	// Schedule entering events for vehicles that can now enter as the section is clear again
+	for( int i = 0; i < 4; i++ ) {
+		for( int j = 0; j < numLanes[i]; j++ ) {
+			if( signalStatus[i][j][currPhase] != RED ) {
+				if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j ) == 0 ) {
+					Event newEvent = peek_from_list( laneQueues[i][j] );
+					Vehicle V = get_object( newEvent );
+					if( get_departDir( V ) == D ) {
+						if( !(get_scheduled( newEvent )) ) {
+							set_timestamp( newEvent, get_sim_time() );
+							schedule_event( newEvent );
+						}
+					}
+				}
 			}
-			else {
-				// IS 1 departDir NORTH
-				
-			}
-			break;
-		}
-		case 3:
-		{
-			if( D == SOUTH ) {
-				// IS 3 departDir SOUTH
-				
-			}
-			else {
-				// IS 2 departDir NORTH
-				
-			}
-			break;
-		}
-		case 4:
-		{
-			if( D == SOUTH ) {
-				// IS 4 departDir SOUTH
-				
-			}
-			else {
-				// IS 3 departDir NORTH
-				
-			}
-			break;
-		}
-		case 5:
-		{
-			if( D == SOUTH ) {
-				// IS 5 departDir SOUTH
-				
-			}
-			else {
-				// IS 4 departDir NORTH
-				
-			}
-			break;
 		}
 	}
 }

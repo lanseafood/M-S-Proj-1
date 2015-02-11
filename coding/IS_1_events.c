@@ -66,7 +66,7 @@ static int IS_1_red_right_turn( Direction D ) {
 	if( get_list_counter( get_lane_queue( IS_1, D, rightTurnLane ) ) == 0 ) return 0;
 	if( get_lane_flag( IS_1, D, rightTurnLane ) == 1 ) return 0;
 	Event E = peek_from_list( get_lane_queue( IS_1, D, rightTurnLane ) );
-	if( get_scheduled(E) == 1 ) return 0;
+	if( get_scheduled( E ) == 1 ) return 0;
 	Vehicle V = get_object( E );
 	if( get_route( V ) != RIGHT ) return 0;
 	switch( D ) {
@@ -115,7 +115,7 @@ static int IS_1_left_turn( Direction D ) {
 	if( get_list_counter( get_lane_queue( IS_1, D, 1 ) ) == 0 ) return 0;
 	
 	Event E = peek_from_list( get_lane_queue( IS_1, D, 1 ) );
-	if( get_scheduled(E) == 1 ) return 0;
+	if( get_scheduled( E ) == 1 ) return 0;
 	Vehicle V = get_object( E );
 	if( get_route( V ) != LEFT ) return 0;
 	
@@ -207,8 +207,9 @@ static void IS_1_entering( void* P ) {
 	Vehicle V = get_object( E );
 	Direction dir = get_dir( V );
 	int laneID = get_laneID( V );
-	if( get_route( V ) == LEFT && IS_1_left_turn( dir ) == 0 ) return;
-	if( get_departDir( V ) == NORTH && get_congestion_flag( S_2, NORTH ) ) return;
+	
+	if( get_route( V ) == LEFT && IS_1_left_turn( dir ) == 0 ) { set_velocity( V, 0.0 ); return; }
+	if( get_departDir( V ) == NORTH && get_congestion_flag( S_2, NORTH ) ) { set_velocity( V, 0.0 ); return; }
 	// Check if this event is first in the queue
 	if( peek_from_list( get_lane_queue( IS_1, dir, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_1_entering(): E is not first in queue\n"); exit(1);
@@ -267,8 +268,10 @@ static void IS_1_crossing( void* P ) {
 		if( get_light( IS_1, dir, laneID ) != RED ) {
 			// Don't enter if permitted left turn and there is traffic in opposite direction
 			if( ! ( get_route( V ) == LEFT && IS_1_left_turn( dir ) == 0 ) ) {
-				set_timestamp( nextEvent, get_sim_time() );
-				schedule_event( nextEvent );
+				if( !(get_scheduled( nextEvent )) ) {
+					set_timestamp( nextEvent, get_sim_time() );
+					schedule_event( nextEvent );
+				}
 			}
 		} else if( laneID == get_numLanes( IS_1 )[dir] && IS_1_red_right_turn( dir ) ) {
 			set_timestamp( nextEvent, get_sim_time() );
