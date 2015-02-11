@@ -85,7 +85,7 @@ Intersection create_intersection(int zoneID) {
 	} else if( zoneID == 5 ) {
 		I->numLanes[NORTH] = 3; I->numLanes[EAST] = 2;
 		I->numLanes[SOUTH] = 3; I->numLanes[WEST] = 2;
-		I->maxPhase = 5;
+		I->maxPhase = 12;
 	} else { fprintf(stderr,"Error from create_intersection(): invalid zoneID\n"); exit(1); }
 	
 	set_up_lanes( I );
@@ -149,7 +149,7 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->crossingDistances[ EAST],((double[3]){102.00, 102.00, 102.00}),3*sizeof(double));
 		memcpy(I->crossingDistances[ WEST],((double[3]){102.00, 102.00, 102.00}),3*sizeof(double));
 		
-		memcpy(I->protected   ,((int    [9])        {    0,   0,   0,    0,   0,   0 }),5*sizeof(int));
+		memcpy(I->protected   ,((int    [9])        {     0,      0,   0,     0,      0,   0 }),5*sizeof(int));
 		memcpy(I->phaseLengths,((double [6])        {  61.2,    3.2, 2.4,  27.3,    3.6, 2.4 }),5*sizeof(double));
 		
 		memcpy(I->signalStatus[NORTH][0],((int [6]) { GREEN, YELLOW, RED,   RED,    RED, RED }),P*sizeof(int));
@@ -179,29 +179,23 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->crossingDistances[ EAST],((double[3]){ 82.00,  82.00,  82.00}),3*sizeof(double));
 		memcpy(I->crossingDistances[ WEST],((double[3]){ 82.00,  82.00,  82.00}),3*sizeof(double));
 		
-		// TODO: INTERSECTION 5 TIMING
-		memcpy(I->protected   ,((int    [9])        {    0,    0,   1,    1,   0,   1,    1,   0,   0 }),P*sizeof(int));
-		memcpy(I->phaseLengths,((double [9])        { 34.6, 3.2, 8.8, 2.7, 1.8, 9, 3.6, 32.7, 3.7 }),P*sizeof(double));
-		
-		memcpy(I->signalStatus[NORTH][0],((int [9]) {    G,    G,   G,    Y,   R,   R,    R,   R,   R }),P*sizeof(int));
-		memcpy(I->signalStatus[NORTH][1],((int [9]) {    G,    Y,   R,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
-		memcpy(I->signalStatus[NORTH][2],((int [9]) {    G,    Y,   R,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
-		
-		memcpy(I->signalStatus[SOUTH][0],((int [9]) {    G,    G,   G,    Y,   R,   R,    R,   R,   R }),P*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][1],((int [9]) {    G,    Y,   R,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
-		
-		memcpy(I->signalStatus[ EAST][0],((int [9]) {    R,    R,   R,    R,   R,   R,    R,   G,   Y }),P*sizeof(int));
-		
-		memcpy(I->signalStatus[ WEST][0],((int [9]) {    R,    R,   R,    R,   R,   R,    G,   Y,   G }),P*sizeof(int));
-		memcpy(I->signalStatus[ WEST][1],((int [9]) {    R,    R,   R,    R,   R,   G,    Y,   G,   G }),P*sizeof(int));
-
-
-
-
-
-		
-	} else ;
+		memcpy(I->protected   ,((int    [12])     {    1,  1,  0,   0,  0,  0,  1,  1,  0,   0,  0,  0 }),P*sizeof(int));
+		memcpy(I->phaseLengths,((double [12])     { 10.0,3.6,2.7,34.6,3.2,2.7,9.8,3.6,1.1,22.4,3.7,2.7 }),P*sizeof(double));
 	
+		memcpy(I->signalStatus[NORTH][0],((int [12]) { G,  Y,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int)); // LEFT TURN
+		memcpy(I->signalStatus[NORTH][1],((int [12]) { R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][2],((int [12]) { R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
+		
+		memcpy(I->signalStatus[SOUTH][0],((int [12]) { G,  Y,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int)); // LEFT TURN
+		memcpy(I->signalStatus[SOUTH][1],((int [12]) { R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][2],((int [12]) { R,  R,  R,   G,  Y,  R,  R,  R,  R,   R,  R,  R }),P*sizeof(int));
+		
+		memcpy(I->signalStatus[ EAST][0],((int [12]) { R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
+		memcpy(I->signalStatus[ EAST][1],((int [12]) { R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
+		
+		memcpy(I->signalStatus[ WEST][0],((int [12]) { R,  R,  R,   R,  R,  R,  G,  G,  G,   G,  Y,  R }),P*sizeof(int)); // LEFT TURN
+		memcpy(I->signalStatus[ WEST][1],((int [12]) { R,  R,  R,   R,  R,  R,  G,  Y,  R,   R,  R,  R }),P*sizeof(int));
+	} else ;
 	// Set current phase and compute time of all phases
 	I->currPhase = 0;
 	I->totalPhaseLength = 0;

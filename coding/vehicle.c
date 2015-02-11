@@ -18,6 +18,9 @@ struct VehicleType {
 	int origin;
 	int destination;
 	int laneID;
+	Direction dir;
+	Direction departDir;
+	Route route;
 	double velocity;
 	double arrivalTime;
 	double waitTime;
@@ -75,6 +78,33 @@ int set_laneID( Vehicle V, int laneID ) {
 
 int get_laneID( Vehicle V ) {
 	return V->laneID;
+}
+
+int set_dir( Vehicle V, Direction dir ) {
+	V->dir = dir;
+	return 0;
+}
+
+Direction get_dir( Vehicle V ) {
+	return V->dir;
+}
+
+int set_departDir( Vehicle V, Direction dir ) {
+	V->departDir = dir;
+	return 0;
+}
+
+Direction get_departDir( Vehicle V ) {
+	return V->departDir;
+}
+
+int set_route( Vehicle V, Route route ) {
+	V->route = route;
+	return 0;
+}
+
+Route get_route( Vehicle V ) {
+	return V->route;
 }
 
 int set_velocity( Vehicle V, double velocity ) {

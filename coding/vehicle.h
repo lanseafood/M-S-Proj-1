@@ -9,6 +9,8 @@
 #ifndef traffic_vehicle_h
 #define traffic_vehicle_h
 
+#include "intersection.h"
+
 // Declare abstract type of Vehicle
 typedef struct VehicleType *Vehicle;
 
@@ -71,6 +73,15 @@ int set_laneID( Vehicle V, int laneID );
  * @return: Lane ID of Vehicle on success, -1 otherwise
  **/
 int get_laneID( Vehicle V );
+
+int set_dir( Vehicle V, Direction dir );
+Direction get_dir( Vehicle V );
+
+int set_departDir( Vehicle V, Direction dir );
+Direction get_departDir( Vehicle V );
+
+int set_route( Vehicle V, Route route );
+Route get_route( Vehicle V );
 
 /**
  * 
