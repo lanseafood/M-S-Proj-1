@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 	srand(seed);
 	
 	// Overall simulation time in seconds
-	double hours   = 0;
+	double hours   = 10;
 	double minutes = 1;
 	double seconds = 0;
 	double simEnd  = hours*3600 + minutes*60 + seconds;

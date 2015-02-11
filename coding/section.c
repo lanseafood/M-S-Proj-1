@@ -10,6 +10,8 @@
 #include <stdlib.h>
 
 #include "section.h"
+#include "simApplication.h"
+#include "simEngine.h"
 
 struct SectionType {
 	int zoneID;
@@ -60,11 +62,45 @@ double get_len(Section S){
 
 int change_north_vehicles(Section S, int val){
 	S->n_vehicles += val;
+	if( !(S->n_vehicles < S->n_capacity) ) {
+		if( !S->n_congestion_flag ) {
+			S->n_congestion_flag = 1;
+			#if VERBOSE == 1
+				printf("%7.2f, Congestion in Section %d in north direction\n", get_sim_time(), S->zoneID );
+			#endif
+		}
+	}
+	else {
+		if( S->n_congestion_flag ) {
+			S->n_congestion_flag = 0;
+			#if VERBOSE == 1
+				printf("%7.2f, Section %d clear in north direction\n", get_sim_time(), S->zoneID );
+			#endif
+			section_clear( S->zoneID, NORTH );
+		}
+	}
 	return 0;
 }
 
 int change_south_vehicles(Section S, int val){
 	S->s_vehicles += val;
+	if( !(S->s_vehicles < S->s_capacity) ) {
+		if( !S->s_congestion_flag ) {
+			S->s_congestion_flag = 1;
+			#if VERBOSE == 1
+				printf("%7.2f, Congestion in Section %d in south direction\n", get_sim_time(), S->zoneID );
+			#endif
+		}
+	}
+	else {
+		if( S->s_congestion_flag ) {
+			S->s_congestion_flag = 0;
+			#if VERBOSE == 1
+				printf("%7.2f, Section %d clear in south direction\n", get_sim_time(), S->zoneID );
+			#endif
+			section_clear( S->zoneID, SOUTH );
+		}
+	}
 	return 0;
 }
 
@@ -74,6 +110,12 @@ int get_north_vehicles(Section S){
 
 int get_south_vehicles(Section S){
 	return S->s_vehicles;
+}
+
+int get_congestion_flag( Section S, Direction D ) {
+	if     ( D == NORTH ) return S->n_congestion_flag;
+	else if( D == SOUTH ) return S->s_congestion_flag;
+	else return -1;
 }
 
 /* eof */

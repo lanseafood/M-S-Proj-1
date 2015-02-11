@@ -9,9 +9,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "event.h"
-#include "intersection.h"
 #include "linkedList.h"
 #include "section.h"
 #include "simApplication.h"
@@ -28,9 +28,6 @@
 
 // Define this preprocessor
 #define SYNC_SIGNAL 0
-
-// Print events to stdout
-#define VERBOSE 1
 
 // Pointer declaration: compare function for priority queue
 int (*compare_to)( void*, void* );
@@ -56,21 +53,21 @@ static int destinations[11] =
 // Origin and destination probabilities
 static double p_origins[11] =
 //-101- -102- -103- -106- -112- -113- -114- -115- -121- -122- -123-
-{ 0.50, 0.25, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.25 };
+{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.20, 0.20 };
 static double p_destinations[11][11] =
 {
 //    -201- -202- -203- -206- -212- -213- -214- -215- -221- -222- -223-
-	{ 0.00, 0.25, 0.00, 0.00, 0.00, 0.00, 0.50, 0.00, 0.00, 0.00, 0.25 }, // origin 101
-	{ 0.25, 0.00, 0.00, 0.00, 0.00, 0.00, 0.50, 0.00, 0.00, 0.00, 0.25 }, // origin 102
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 103
+	{ 0.00, 0.25, 0.25, 0.00, 0.00, 0.00, 0.25, 0.00, 0.00, 0.00, 0.25 }, // origin 101
+	{ 0.25, 0.00, 0.25, 0.00, 0.00, 0.00, 0.25, 0.00, 0.00, 0.00, 0.25 }, // origin 102
+	{ 0.20, 0.20, 0.00, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.20, 0.20 }, // origin 103
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 106
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 112
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 113
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 114
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 115
 	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 121
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 122
-	{ 0.25, 0.25, 0.00, 0.00, 0.00, 0.00, 0.50, 0.00, 0.00, 0.00, 0.00 }  // origin 123
+	{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.00, 0.20 }, // origin 122
+	{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.20, 0.00 }  // origin 123
 };
 
 /*
@@ -91,8 +88,8 @@ static double p_origins[11] =
 static double p_destinations[11][11] =
 {
 //     -201-   -202-   -203-   -206-   -212-   -213-   -214-   -215-   -221-   -222-   -223-
-	{ 0.0000, 0.0960, 0.0000, 0.0160, 0.0080, 0.0160, 0.5360, 0.0640, 0.0400, 0.0240, 0.2000 }, // origin 101
-	{ 0.2424, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.5455, 0.0909, 0.0303, 0.0303, 0.0303 }, // origin 102
+	{ 0.0000, 0.0960, 0.0000, 0.0160, 0.0080, 0.0160, 0.5360, 0.0640, 0.0640, 0.0000, 0.2000 }, // origin 101
+	{ 0.2424, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.5455, 0.0909, 0.0606, 0.0000, 0.0303 }, // origin 102
 	{ 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.1111, 0.0000, 0.0000, 0.7778, 0.1111 }, // origin 103
 	{ 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 }, // origin 106
 	{ 0.0769, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.6923, 0.1538, 0.0769, 0.0000, 0.0000 }, // origin 112
@@ -101,26 +98,26 @@ static double p_destinations[11][11] =
 	{ 0.2692, 0.0385, 0.0192, 0.0192, 0.0577, 0.0096, 0.4423, 0.0000, 0.0288, 0.0288, 0.0865 }, // origin 115
 	{ 0.2000, 0.3000, 0.1000, 0.0000, 0.0000, 0.0000, 0.2000, 0.0000, 0.0000, 0.1000, 0.1000 }, // origin 121
 	{ 0.2653, 0.4490, 0.0816, 0.0000, 0.0000, 0.0000, 0.0204, 0.0204, 0.0000, 0.0000, 0.1633 }, // origin 122
-	{ 0.4894, 0.0000, 0.0426, 0.0000, 0.0000, 0.0213, 0.3617, 0.0426, 0.0000, 0.0426, 0.0000 }  // origin 123
+	{ 0.4894, 0.0000, 0.0426, 0.0000, 0.0000, 0.0213, 0.3617, 0.0426, 0.0426, 0.0000, 0.0000 }  // origin 123
 };
 --------------------------------------------------------------------------------------
 ======================================================================================
 */
 
 // Auxiliary function for computing velocity, distance, time while accelerating
-static inline double calc_velocity( double v_cur, double t ) {
+static double calc_velocity( double v_cur, double t ) {
 	// v = v_cur + a*t
 	return fmin(v_cur + ACC * t, VEL);
 }
 
-static inline double calc_distance( double v_cur, double t ) {
+static double calc_distance( double v_cur, double t ) {
 	// s = v_cur*t + 0.5*a*t^2
 	double t_acc = (VEL - v_cur) / ACC;
 	double d_acc = v_cur*t_acc + 0.5*ACC*t_acc*t_acc;
 	return (t_acc <= t) ? d_acc + (t-t_acc)*VEL : v_cur*t + 0.5*ACC*t*t;
 }
 
-static inline double calc_time( double v_cur, double dist ) {
+static double calc_time( double v_cur, double dist ) {
 	// t = -v_cur/a + sqrt( v_cur^2 + 2*a*s )/a
 	double t_acc = (VEL - v_cur) / ACC;
 	double d_acc = v_cur*t_acc + 0.5*ACC*t_acc*t_acc;
@@ -202,11 +199,11 @@ void create_sim( double simEnd ) {
 
 	// Create Sections
 	S_1 = create_section( 1, VHL, SDQ );
-	S_1 = create_section( 2, VHL, SDQ );
-	S_1 = create_section( 3, VHL, SDQ );
-	S_1 = create_section( 4, VHL, SDQ );
-	S_1 = create_section( 5, VHL, SDQ );
-	S_1 = create_section( 6, VHL, SDQ );
+	S_2 = create_section( 2, VHL, SDQ );
+	S_3 = create_section( 3, VHL, SDQ );
+	S_4 = create_section( 4, VHL, SDQ );
+	S_5 = create_section( 5, VHL, SDQ );
+	S_6 = create_section( 6, VHL, SDQ );
 	
 	// Initialize state variables
 	arrivals = 0;
@@ -216,10 +213,6 @@ void create_sim( double simEnd ) {
 	
 	// Call engine setup
 	set_up_sim();
-
-	// Initialize and schedule first event (global arrival)
-	Event firstArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
-	schedule_event( firstArrival );
 	
 	// Initialize signal events
 	printf( "\n---------------------------------------------------------\n");
@@ -230,6 +223,18 @@ void create_sim( double simEnd ) {
 	#endif
 	printf( "---------------------------------------------------------\n");
 	
+	/* Use new random seed for simulation (other than for signal initialization) */
+	/*
+	struct timeval t1;
+	gettimeofday(&t1, NULL);
+	int seed = (int)(t1.tv_usec * t1.tv_sec);
+	srand(seed);
+	*/
+	 
+	// Initialize and schedule first event (global arrival)
+	Event firstArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
+	schedule_event( firstArrival );
+
 	// Run simulation
 	run_sim( simEnd );
 	
@@ -421,20 +426,44 @@ static void global_arrival( void* P ) {
 			set_dir( V, EAST );
 			break;
 		case 103:
+			set_event_type( E, IS_2_ARRIVAL );
+			set_callback  ( E, IS_2_arrival );
+			set_dir( V, EAST );
 			break;
 		case 106:
+			set_event_type( E, IS_3_ARRIVAL );
+			set_callback  ( E, IS_3_arrival );
+			set_dir( V, EAST );
 			break;
 		case 112:
+			set_event_type( E, IS_4_ARRIVAL );
+			set_callback  ( E, IS_4_arrival );
+			set_dir( V, EAST );
 			break;
 		case 113:
+			set_event_type( E, IS_5_ARRIVAL );
+			set_callback  ( E, IS_5_arrival );
+			set_dir( V, EAST );
 			break;
 		case 114:
+			set_event_type( E, IS_5_ARRIVAL );
+			set_callback  ( E, IS_5_arrival );
+			set_dir( V, NORTH );
 			break;
 		case 115:
+			set_event_type( E, IS_5_ARRIVAL );
+			set_callback  ( E, IS_5_arrival );
+			set_dir( V, WEST );
 			break;
 		case 121:
+			set_event_type( E, IS_3_ARRIVAL );
+			set_callback  ( E, IS_3_arrival );
+			set_dir( V, WEST );
 			break;
 		case 122:
+			set_event_type( E, IS_2_ARRIVAL );
+			set_callback  ( E, IS_2_arrival );
+			set_dir( V, WEST );
 			break;
 		case 123:
 			set_event_type( E, IS_1_ARRIVAL );
@@ -568,7 +597,63 @@ static void IS_signal( void* P ) {
 \* ---------------------------------------------------------------------------------------- */
 
 
-// ..
-
+void section_clear( int ID, Direction D ) {
+	switch( ID ) {
+		case 2:
+		{
+			if( D == SOUTH ) {
+				// IS 2 departDir SOUTH
+				
+			}
+			else {
+				// IS 1 departDir NORTH
+				
+			}
+			break;
+		}
+		case 3:
+		{
+			if( D == SOUTH ) {
+				// IS 3 departDir SOUTH
+				
+			}
+			else {
+				// IS 2 departDir NORTH
+				
+			}
+			break;
+		}
+		case 4:
+		{
+			if( D == SOUTH ) {
+				// IS 4 departDir SOUTH
+				
+			}
+			else {
+				// IS 3 departDir NORTH
+				
+			}
+			break;
+		}
+		case 5:
+		{
+			if( D == SOUTH ) {
+				// IS 5 departDir SOUTH
+				
+			}
+			else {
+				// IS 4 departDir NORTH
+				
+			}
+			break;
+		}
+	}
+}
 
 /* eof */
+
+
+
+
+
+

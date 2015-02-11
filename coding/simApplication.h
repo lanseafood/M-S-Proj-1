@@ -9,7 +9,11 @@
 #ifndef traffic_simApplication_h
 #define traffic_simApplication_h
 
+#include "intersection.h"
 #include "simEngine.h"
+
+// Print events to stdout
+#define VERBOSE 0
 
 /**
  * - Initializes a new simulation and its parameters
@@ -19,6 +23,8 @@
  * @params simTime: Overall simulation time
 **/
 void create_sim( double simTime );
+
+void section_clear( int ID, Direction D );
 
 #endif
 

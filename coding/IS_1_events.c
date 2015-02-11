@@ -68,11 +68,11 @@ static int IS_1_red_right_turn( Direction D ) {
 	Event E = peek_from_list( get_lane_queue( IS_1, D, rightTurnLane ) );
 	if( get_scheduled(E) == 1 ) return 0;
 	Vehicle V = get_object( E );
+	if( get_route( V ) != RIGHT ) return 0;
 	switch( D ) {
 		case NORTH:
 		{
-			if(   get_destination( V ) == 223
-			   && get_lane_counter( IS_1, SOUTH, 1 ) == 0
+			if(   get_lane_counter( IS_1, SOUTH, 1 ) == 0
 			   && get_lane_counter( IS_1,  EAST, 2 ) == 0
 			   && get_lane_counter( IS_1,  EAST, 3 ) == 0
 			   ) redRightTurn = 1;
@@ -80,9 +80,7 @@ static int IS_1_red_right_turn( Direction D ) {
 		}
 		case  EAST:
 		{
-			if(   get_laneID( V ) == 3
-			   && get_destination( V ) != 223
-			   && get_lane_counter( IS_1,  WEST, 1 ) == 0
+			if(   get_lane_counter( IS_1,  WEST, 1 ) == 0
 			   && get_lane_counter( IS_1, SOUTH, 2 ) == 0
 			   && get_lane_counter( IS_1, SOUTH, 3 ) == 0
 			   ) redRightTurn = 1;
@@ -90,8 +88,7 @@ static int IS_1_red_right_turn( Direction D ) {
 		}
 		case SOUTH:
 		{
-			if(   get_destination( V ) == 202
-			   && get_lane_counter( IS_1, NORTH, 1 ) == 0
+			if(   get_lane_counter( IS_1, NORTH, 1 ) == 0
 			   && get_lane_counter( IS_1,  WEST, 2 ) == 0
 			   && get_lane_counter( IS_1,  WEST, 3 ) == 0
 			   ) redRightTurn = 1;
@@ -99,8 +96,7 @@ static int IS_1_red_right_turn( Direction D ) {
 		}
 		case  WEST:
 		{
-			if(   get_destination( V ) == 201
-			   && get_lane_counter( IS_1,  EAST, 1 ) == 0
+			if(   get_lane_counter( IS_1,  EAST, 1 ) == 0
 			   && get_lane_counter( IS_1, NORTH, 2 ) == 0
 			   && get_lane_counter( IS_1, NORTH, 3 ) == 0
 			   ) redRightTurn = 1;
@@ -121,8 +117,9 @@ static int IS_1_left_turn( Direction D ) {
 	Event E = peek_from_list( get_lane_queue( IS_1, D, 1 ) );
 	if( get_scheduled(E) == 1 ) return 0;
 	Vehicle V = get_object( E );
+	if( get_route( V ) != LEFT ) return 0;
 	
-	if( get_light( IS_1, D, 1 ) != GREEN ) return 0;
+	if( get_light( IS_1, D, 1 ) == RED ) return 0;
 	if( get_lane_flag( IS_1, D, 1 ) == 1 ) return 0;
 	if( get_protected( IS_1 ) == 1 ) return 1;
 	
@@ -179,7 +176,7 @@ static void IS_1_arrival( void* P ) {
 	set_laneID( V, newLane );
 	add_to_list( get_lane_queue( IS_1, dir, newLane ), E );
 	// Check traffic signal
-	if( get_light( IS_1, dir, newLane ) != GREEN ) {
+	if( get_light( IS_1, dir, newLane ) == RED ) {
 		// Put vehicle in queue
 		set_velocity( V, 0.0 );
 		if( newLane == get_numLanes( IS_1 )[dir] && IS_1_red_right_turn( dir ) ) {
@@ -194,7 +191,7 @@ static void IS_1_arrival( void* P ) {
 		   && get_lane_flag( IS_1, dir, newLane ) == 0 )
 		{
 			// Don't enter if permitted left turn and there is traffic in opposite direction
-			if( ! ( newLane == 1 && IS_1_left_turn( dir ) == 0 ) ) {
+			if( ! ( get_route( V ) == LEFT && IS_1_left_turn( dir ) == 0 ) ) {
 				schedule_event( E );
 			} else { set_velocity( V, 0.0 ); }
 		}
@@ -210,7 +207,8 @@ static void IS_1_entering( void* P ) {
 	Vehicle V = get_object( E );
 	Direction dir = get_dir( V );
 	int laneID = get_laneID( V );
-	if( laneID == 1 && IS_1_left_turn( dir ) == 0 ) return;
+	if( get_route( V ) == LEFT && IS_1_left_turn( dir ) == 0 ) return;
+	if( get_departDir( V ) == NORTH && get_congestion_flag( S_2, NORTH ) ) return;
 	// Check if this event is first in the queue
 	if( peek_from_list( get_lane_queue( IS_1, dir, laneID ) ) != E ) {
 		fprintf(stderr,"Error from IS_1_entering(): E is not first in queue\n"); exit(1);
@@ -231,6 +229,8 @@ static void IS_1_entering( void* P ) {
 		schedule_event( poll_from_list( get_lane_queue( IS_1, dir, laneID ) ) );
 		add_wait_time( V, get_sim_time()-get_wait_time_buf( V ) );
 		set_wait_time_buf( V, 0.0 );
+		// Decrement section vehicle counter
+		if( dir == NORTH ) change_south_vehicles( S_2, -1 );
 	}
 }
 
@@ -255,18 +255,18 @@ static void IS_1_crossing( void* P ) {
 	double distance_to_departure = fmax( 0.0, crossingDistance - get_temp_distance(V) );
 	double time_to_departure = calc_time( get_velocity(V), distance_to_departure );
 	if( get_velocity(V) < VEL ) {
-		set_velocity(V, calc_velocity(get_velocity(V), time_to_departure) );
+		set_velocity(V, calc_velocity( get_velocity(V), time_to_departure) );
 	}
 	set_timestamp( E, get_sim_time() + time_to_departure );
 	// Schedule departure
 	schedule_event( E );
 	
-	// Schedule entering event for following vehicle, if signal is still green
+	// Schedule entering event for following vehicle, if signal is still yellow/green
 	if( get_list_counter( get_lane_queue( IS_1, dir, laneID ) ) > 0 ) {
 		Event nextEvent = peek_from_list( get_lane_queue( IS_1, dir, laneID ) );
-		if( get_light( IS_1, dir, laneID ) == GREEN ) {
+		if( get_light( IS_1, dir, laneID ) != RED ) {
 			// Don't enter if permitted left turn and there is traffic in opposite direction
-			if( ! ( laneID == 1 && IS_1_left_turn( dir ) == 0 ) ) {
+			if( ! ( get_route( V ) == LEFT && IS_1_left_turn( dir ) == 0 ) ) {
 				set_timestamp( nextEvent, get_sim_time() );
 				schedule_event( nextEvent );
 			}
@@ -311,19 +311,18 @@ static void IS_1_departure( void* P ) {
 		schedule_event( rightTurn );
 	}
 	
-	/*
-	 * Increment Section 2 numVehicles (set congestion flag if numVehicles > capacity)
-	 * SCHEDULE local arrival at Intersection 2 - South
-	 */
-	
-	// TEST schedule global departure TEST
+	// Schedule next event
 	if( departDir == NORTH ) {
-		set_event_type( E, GLOBAL_DEPARTURE );
-		set_callback  ( E, global_departure );
-		// set timestamp (depends on velocity)
-		// set final velocity
-		// set section 2 counter
-		// set vehicle dir (south)
+		set_event_type( E, IS_2_ARRIVAL );
+		set_callback  ( E, IS_2_arrival );
+		double leng = get_len( S_2 );
+		double timeToArrival = calc_time( get_velocity( V ), get_len( S_2 ) );
+		set_timestamp ( E, get_sim_time() + timeToArrival );
+		set_velocity( V, calc_velocity( get_velocity( V ), timeToArrival ) );
+		// Increment section vehicle counter
+		change_north_vehicles( S_2, 1 );
+		set_dir( V, SOUTH );
+		
 	} else {
 		set_event_type( E, GLOBAL_DEPARTURE );
 		set_callback  ( E, global_departure );

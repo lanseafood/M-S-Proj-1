@@ -1,5 +1,5 @@
 //
-//  IS_1_events.c
+//  IS_3_events.c
 //  traffic
 //
 //  Authors: Mingyue Ma, Eisha Nathan, Stefan Henneking
@@ -8,7 +8,14 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 static void IS_3_arrival( void* P ) {
+	Event E = (Event) P;
+	check_and_print_vehicle_event( E );
 	
+	change_north_vehicles( S_3, -1 );
+	
+	set_event_type( E, GLOBAL_DEPARTURE );
+	set_callback  ( E, global_departure );
+	schedule_event( E );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

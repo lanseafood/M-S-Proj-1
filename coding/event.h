@@ -54,10 +54,7 @@ static const char TypeOfEventStrings[NUM_EVENT_TYPES][20] = {
 	{"IS_4_ARRIVAL"},{"IS_4_ENTERING"},{"IS_4_CROSSING"},{"IS_4_DEPARTURE"},
 	{"IS_5_ARRIVAL"},{"IS_5_ENTERING"},{"IS_5_CROSSING"},{"IS_5_DEPARTURE"},
 	
-	{"S_2_N_CLEAR"},{"S_2_S_CLEAR"},
-	{"S_3_N_CLEAR"},{"S_3_S_CLEAR"},
-	{"S_4_N_CLEAR"},{"S_4_S_CLEAR"},
-	{"S_5_N_CLEAR"},{"S_5_S_CLEAR"}
+	{"S_2_CLEAR"},{"S_3_CLEAR"},{"S_4_CLEAR"},{"S_5_CLEAR"}
 };
 
 /**

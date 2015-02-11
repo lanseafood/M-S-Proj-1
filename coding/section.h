@@ -9,6 +9,8 @@
 #ifndef traffic_section_h
 #define traffic_section_h
 
+#include "intersection.h"
+
 // Declare abstract type of Section
 typedef struct SectionType *Section;
 
@@ -23,6 +25,8 @@ int change_south_vehicles(Section S, int val);
 
 int get_north_vehicles(Section S);
 int get_south_vehicles(Section S);
+
+int get_congestion_flag( Section S, Direction D );
 
 #endif
 

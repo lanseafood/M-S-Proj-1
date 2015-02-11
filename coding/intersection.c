@@ -130,12 +130,12 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->protected   ,((int    [9])        {    1,    0,   0,    1,   1,   0,    0,   0,   0 }),P*sizeof(int));
 		memcpy(I->phaseLengths,((double [9])        { 18.3, 23.2, 3.2, 15.1, 3.2, 5.0, 20.3, 3.6, 5.0 }),P*sizeof(double));
 		
-		memcpy(I->signalStatus[NORTH][0],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
-		memcpy(I->signalStatus[NORTH][1],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
-		memcpy(I->signalStatus[NORTH][2],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][0],((int [9]) {    R,    G,   G,    G,   Y,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][1],((int [9]) {    R,    G,   G,    G,   Y,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[NORTH][2],((int [9]) {    R,    G,   G,    G,   Y,   R,    R,   R,   R }),P*sizeof(int));
 		
-		memcpy(I->signalStatus[SOUTH][0],((int [9]) {    R,    G,   G,    G,   Y,   R,    R,   R,   R }),P*sizeof(int));
-		memcpy(I->signalStatus[SOUTH][1],((int [9]) {    R,    G,   G,    G,   Y,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][0],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
+		memcpy(I->signalStatus[SOUTH][1],((int [9]) {    G,    G,   Y,    R,   R,   R,    R,   R,   R }),P*sizeof(int));
 		
 		memcpy(I->signalStatus[ EAST][0],((int [9]) {    R,    R,   R,    R,   R,   R,    G,   Y,   R }),P*sizeof(int));
 		
