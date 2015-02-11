@@ -35,9 +35,10 @@ static int IS_2_choose_route_and_lane( Direction dir, int dest, Vehicle V ) {
 		case SOUTH:
 		{
 			if( dest == 203 ) { set_route( V, RIGHT ); set_departDir( V, EAST ); laneID = 2; }
+			else if( dest == 203 ) { set_route( V, LEFT ); set_departDir( V, WEST ); laneID = 1; }
 			else { set_route( V, STRAIGHT ); set_departDir( V, NORTH ); laneID =
-				( get_list_counter( get_lane_queue( IS_2, SOUTH, 2 ) ) <
-				 get_list_counter( get_lane_queue( IS_2, SOUTH, 1 ) ) ) ? 2 : 1; }
+				( get_list_counter( get_lane_queue( IS_2, SOUTH, 1 ) ) <
+				 get_list_counter( get_lane_queue( IS_2, SOUTH, 2 ) ) ) ? 1 : 2; }
 			break;
 		}
 		case WEST:
@@ -128,6 +129,13 @@ static int IS_2_left_turn( Direction D ) {
 		{
 			if(   get_lane_counter( IS_2, WEST, 1 ) == 0
 			   && get_lane_counter( IS_2, WEST, 2 ) == 0
+			   ) leftTurn = 1;
+			break;
+		}
+		case SOUTH:
+		{
+			if(   get_lane_counter( IS_2, NORTH, 2 ) == 0
+			   && get_lane_counter( IS_2, NORTH, 3 ) == 0
 			   ) leftTurn = 1;
 			break;
 		}

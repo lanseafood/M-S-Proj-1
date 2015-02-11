@@ -93,10 +93,10 @@ Intersection create_intersection(int zoneID) {
 	
 	if (zoneID==1) {
 		//                                               RIGHT STRAIGHT  LEFT
-		memcpy(I->crossingDistances[NORTH],((double[3]){ 99.73,  99.73,  99.73}),3*sizeof(double));
-		memcpy(I->crossingDistances[SOUTH],((double[3]){ 99.73,  99.73,  99.73}),3*sizeof(double));
-		memcpy(I->crossingDistances[ EAST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
-		memcpy(I->crossingDistances[ WEST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[NORTH],((double[3]){ 50.00,  99.73,  99.73}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 68.00,  99.73,  99.73}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){ 57.00, 106.00, 106.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){ 36.00, 106.00, 106.00}),3*sizeof(double));
 
 		memcpy(I->protected   ,((int    [12])     {   1,  1,  0,   0,  0,  0,  1,  1,  0,   0,  0,  0 }),P*sizeof(int));
 		memcpy(I->phaseLengths,((double [12])     { 7.0,3.6,2.4,34.9,3.8,2.4,8.0,2.4,2.4,30.0,3.2,2.4 }),P*sizeof(double));
@@ -122,10 +122,10 @@ Intersection create_intersection(int zoneID) {
 	}
 	else if (zoneID==2) {
 		//                                               RIGHT STRAIGHT  LEFT
-		memcpy(I->crossingDistances[NORTH],((double[3]){129.88, 129.88, 129.88}),3*sizeof(double));
-		memcpy(I->crossingDistances[SOUTH],((double[3]){129.88, 129.88, 129.88}),3*sizeof(double));
-		memcpy(I->crossingDistances[ EAST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
-		memcpy(I->crossingDistances[ WEST],((double[3]){106.00, 106.00, 106.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[NORTH],((double[3]){ 63.00, 129.88, 129.88}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 82.00, 129.88, 129.88}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){ 62.00, 106.00, 106.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){ 90.00, 106.00, 106.00}),3*sizeof(double));
 		
 		memcpy(I->protected   ,((int    [9])        {    1,    0,   0,    1,   1,   0,    0,   0,   0 }),P*sizeof(int));
 		memcpy(I->phaseLengths,((double [9])        { 18.3, 23.2, 3.2, 15.1, 3.2, 5.0, 20.3, 3.6, 5.0 }),P*sizeof(double));
@@ -144,10 +144,10 @@ Intersection create_intersection(int zoneID) {
 	}
 	else if (zoneID==3) {
 		//                                               RIGHT STRAIGHT  LEFT
-		memcpy(I->crossingDistances[NORTH],((double[3]){ 73.51,  73.51,  73.51}),3*sizeof(double));
-		memcpy(I->crossingDistances[SOUTH],((double[3]){ 73.51,  73.51,  73.51}),3*sizeof(double));
-		memcpy(I->crossingDistances[ EAST],((double[3]){102.00, 102.00, 102.00}),3*sizeof(double));
-		memcpy(I->crossingDistances[ WEST],((double[3]){102.00, 102.00, 102.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[NORTH],((double[3]){ 55.00,  73.51,  73.51}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 41.00,  73.51,  73.51}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){ 63.00, 102.00, 102.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){ 59.00, 102.00, 102.00}),3*sizeof(double));
 		
 		memcpy(I->protected   ,((int    [9])        {     0,      0,   0,     0,      0,   0 }),5*sizeof(int));
 		memcpy(I->phaseLengths,((double [6])        {  61.2,    3.2, 2.4,  27.3,    3.6, 2.4 }),5*sizeof(double));
@@ -168,16 +168,16 @@ Intersection create_intersection(int zoneID) {
 	}
 	else if (zoneID==4) {
 		//                                               RIGHT STRAIGHT  LEFT
-		memcpy(I->crossingDistances[NORTH],((double[3]){ 66.60,  66.60,  66.60}),3*sizeof(double));
-		memcpy(I->crossingDistances[SOUTH],((double[3]){ 66.60,  66.60,  66.60}),3*sizeof(double));
-		memcpy(I->crossingDistances[ EAST],((double[3]){ 80.00,   0.00,  80.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[NORTH],((double[3]){  0.00,  66.60,  66.60}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 38.00,  66.60,  66.60}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){ 42.00,   0.00,  80.00}),3*sizeof(double));
 	}
 	else if (zoneID==5) {
 		//                                               RIGHT STRAIGHT  LEFT
-		memcpy(I->crossingDistances[NORTH],((double[3]){121.32, 121.32, 121.32}),3*sizeof(double));
-		memcpy(I->crossingDistances[SOUTH],((double[3]){121.32, 121.32, 121.32}),3*sizeof(double));
-		memcpy(I->crossingDistances[ EAST],((double[3]){ 82.00,  82.00,  82.00}),3*sizeof(double));
-		memcpy(I->crossingDistances[ WEST],((double[3]){ 82.00,  82.00,  82.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[NORTH],((double[3]){ 56.00, 121.32, 121.32}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 33.00, 121.32, 121.32}),3*sizeof(double));
+		memcpy(I->crossingDistances[ EAST],((double[3]){ 76.00,  82.00,  82.00}),3*sizeof(double));
+		memcpy(I->crossingDistances[ WEST],((double[3]){ 73.00,  82.00,  82.00}),3*sizeof(double));
 		
 		memcpy(I->protected   ,((int    [12])     {    1,  1,  0,   0,  0,  0,  1,  1,  0,   0,  0,  0 }),P*sizeof(int));
 		memcpy(I->phaseLengths,((double [12])     { 10.0,3.6,2.7,34.6,3.2,2.7,9.8,3.6,1.1,22.4,3.7,2.7 }),P*sizeof(double));
