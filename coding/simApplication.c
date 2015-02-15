@@ -601,15 +601,14 @@ static void IS_signal( void* P ) {
 void section_clear( int ID, Direction D ) {
 	Intersection I = IS_pointer[ID-1];
 	// Get intersection fields
-	int ***signalStatus = get_signalStatus( I );
+	
 	int *numLanes = get_numLanes( I );
 	LinkedList **laneQueues = get_laneQueues( I );
-	int currPhase = get_currPhase( I );
-	
-	// Schedule entering events for vehicles that can now enter as the section is clear again
-	for( int i = 0; i < 4; i++ ) {
-		for( int j = 0; j < numLanes[i]; j++ ) {
-			if( signalStatus[i][j][currPhase] != RED ) {
+	if( ID == 4 ) {
+		// Schedule entering events for vehicles that can now enter as the section is clear again
+		// Schedule only North/South for IS 4
+		for( int i = 0; i < 4; i+=2 ) {
+			for( int j = 0; j < numLanes[i]; j++ ) {
 				if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j ) == 0 ) {
 					Event newEvent = peek_from_list( laneQueues[i][j] );
 					Vehicle V = get_object( newEvent );
@@ -617,6 +616,26 @@ void section_clear( int ID, Direction D ) {
 						if( !(get_scheduled( newEvent )) ) {
 							set_timestamp( newEvent, get_sim_time() );
 							schedule_event( newEvent );
+						}
+					}
+				}
+			}
+		}
+	} else {
+		int ***signalStatus = get_signalStatus( I );
+		int currPhase = get_currPhase( I );
+		// Schedule entering events for vehicles that can now enter as the section is clear again
+		for( int i = 0; i < 4; i++ ) {
+			for( int j = 0; j < numLanes[i]; j++ ) {
+				if( signalStatus[i][j][currPhase] != RED ) {
+					if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j ) == 0 ) {
+						Event newEvent = peek_from_list( laneQueues[i][j] );
+						Vehicle V = get_object( newEvent );
+						if( get_departDir( V ) == D ) {
+							if( !(get_scheduled( newEvent )) ) {
+								set_timestamp( newEvent, get_sim_time() );
+								schedule_event( newEvent );
+							}
 						}
 					}
 				}

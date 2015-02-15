@@ -169,7 +169,7 @@ Intersection create_intersection(int zoneID) {
 	else if (zoneID==4) {
 		//                                               RIGHT STRAIGHT  LEFT
 		memcpy(I->crossingDistances[NORTH],((double[3]){  0.00,  66.60,  66.60}),3*sizeof(double));
-		memcpy(I->crossingDistances[SOUTH],((double[3]){ 38.00,  66.60,  66.60}),3*sizeof(double));
+		memcpy(I->crossingDistances[SOUTH],((double[3]){ 38.00,  66.60,   0.00}),3*sizeof(double));
 		memcpy(I->crossingDistances[ EAST],((double[3]){ 42.00,   0.00,  80.00}),3*sizeof(double));
 	}
 	else if (zoneID==5) {
