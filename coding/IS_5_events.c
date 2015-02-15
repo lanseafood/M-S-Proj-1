@@ -163,27 +163,27 @@ static int IS_5_left_turn( Direction D ) {
 	switch( D ) {
 		case NORTH:
 		{
-			if(   get_lane_counter( IS_1, SOUTH, 2 ) == 0
-			   && get_lane_counter( IS_1, SOUTH, 3 ) == 0
+			if(   get_lane_counter( IS_5, SOUTH, 2 ) == 0
+			   && get_lane_counter( IS_5, SOUTH, 3 ) == 0
 			   ) leftTurn = 1;
 			break;
 		}
 		case  EAST: //check if left exists here
 		{
-			if (get_lane_counter( IS_1, WEST, 2 ) == 0) leftTurn = 1;
+			if (get_lane_counter( IS_5, WEST, 2 ) == 0) leftTurn = 1;
 			break;
 		}
 		case SOUTH:
 		{
-			if(   get_lane_counter( IS_1, NORTH, 2 ) == 0
-			   && get_lane_counter( IS_1, NORTH, 3 ) == 0
+			if(   get_lane_counter( IS_5, NORTH, 2 ) == 0
+			   && get_lane_counter( IS_5, NORTH, 3 ) == 0
 			   ) leftTurn = 1;
 			break;
 		}
 		case  WEST:
 		{
-			if(   get_lane_counter( IS_1, EAST, 1 ) == 0
-			   && get_lane_counter( IS_1, EAST, 2 ) == 0
+			if(   get_lane_counter( IS_5, EAST, 1 ) == 0
+			   && get_lane_counter( IS_5, EAST, 2 ) == 0
 			   ) leftTurn = 1;
 			break;
 		}
