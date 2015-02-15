@@ -43,10 +43,9 @@ static int IS_5_choose_route_and_lane( Direction dir, int dest, Vehicle V ) {
 				set_route(V, RIGHT);
 				set_departDir(V, NORTH);
 				laneID = 2;
-			} else { //?? check laneid;
-				set_route(V, LEFT);
-				set_departDir(V, SOUTH);
-				laneID = 1;
+			} else {
+				fprintf(stderr,"Error from IS_5_choose_lane(): unexpected destination zone\n");
+				exit(1);
 			}
 			break;
 		}
@@ -124,17 +123,16 @@ static int IS_5_red_right_turn( Direction D ) {
 			   ) redRightTurn = 1;
 			break;
 		}
-		case SOUTH: //check me
+		case SOUTH:
 		{
 			if(   get_lane_counter( IS_5, NORTH, 1 ) == 0
 			   && get_lane_counter( IS_5,  WEST, 2 ) == 0
 			   ) redRightTurn = 1;
 			break;
 		}
-		case  WEST: //check east left here in topology
+		case  WEST:
 		{
-			if(   get_lane_counter( IS_5,  EAST, 1 ) == 0
-			   && get_lane_counter( IS_5, NORTH, 2 ) == 0
+			if(   get_lane_counter( IS_5, NORTH, 2 ) == 0
 			   && get_lane_counter( IS_5, NORTH, 3 ) == 0
 			   ) redRightTurn = 1;
 			break;
@@ -168,9 +166,9 @@ static int IS_5_left_turn( Direction D ) {
 			   ) leftTurn = 1;
 			break;
 		}
-		case  EAST: //check if left exists here
+		case  EAST:
 		{
-			if (get_lane_counter( IS_1, WEST, 2 ) == 0) leftTurn = 1;
+			leftTurn = 0;
 			break;
 		}
 		case SOUTH:
@@ -357,7 +355,7 @@ static void IS_5_departure( void* P ) {
 		set_timestamp ( E, get_sim_time() + timeToArrival );
 		set_velocity( V, calc_velocity( get_velocity( V ), timeToArrival ) );
 		// Increment section vehicle counter
-		change_north_vehicles( S_5, 1 );
+		change_south_vehicles( S_5, 1 );
 		set_dir( V, NORTH );
 		
 	} else {
