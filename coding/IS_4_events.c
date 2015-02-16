@@ -70,8 +70,7 @@ static int IS_4_east_right_turn() {
 // Check if left turn for direction D is possible based on IS 3 traffic
 static int IS_4_left_turn( Direction D ) {
     int leftTurn = 0;
-    if( get_list_counter( get_lane_queue( IS_4, D, 1 ) ) == 0 ) return 0;
-    
+	if( get_list_counter( get_lane_queue( IS_4, D, 1 ) ) == 0 ) return 0;
     Event E = peek_from_list( get_lane_queue( IS_4, D, 1 ) );
     if( get_scheduled( E ) == 1 ) return 0;
     Vehicle V = get_object( E );
@@ -90,7 +89,7 @@ static int IS_4_left_turn( Direction D ) {
         }
         case  EAST:
         {
-            if( get_lane_counter( IS_4, SOUTH, 1 ) == 0
+            if(   get_lane_counter( IS_4, SOUTH, 1 ) == 0
 			   && get_lane_counter( IS_4, SOUTH, 2 ) == 0
 			   && get_lane_counter( IS_4, SOUTH, 3 ) == 0
 			   && get_lane_counter( IS_4, NORTH, 1 ) == 0
@@ -120,19 +119,17 @@ static void IS_4_arrival( void* P ) {
     set_laneID( V, newLane );
     add_to_list( get_lane_queue( IS_4, dir, newLane ), E );
     
-    //peachtrre vs 13th street. L turn coming from north must check. 
     if(   get_list_counter( get_lane_queue( IS_4, dir, newLane ) ) == 1
        && get_lane_flag( IS_4, dir, newLane ) == 0 )
     {
-        // Don't enter if permitted left turn and there is traffic in opposite direction
+        // Don't enter if traffic does not allow it
         if( ! ( get_route( V ) == LEFT && IS_4_left_turn( dir ) == 0 ) &&
 		    ! ( dir == EAST && get_route( V ) == RIGHT && IS_4_east_right_turn() == 0 ) ) {
             schedule_event( E );
-        } else { set_velocity( V, 0.0 ); }
+		} else { set_velocity( V, 0.0 ); }
     }
     else { set_velocity( V, 0.0 ); }
     set_wait_time_buf( V, get_sim_time() );
-
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,14 +195,13 @@ static void IS_4_crossing( void* P ) {
     set_timestamp( E, get_sim_time() + time_to_departure );
     // Schedule departure
     schedule_event( E );
-    
     // Schedule entering event for following vehicle, if signal is still yellow/green
     if( get_list_counter( get_lane_queue( IS_4, dir, laneID ) ) > 0 ) {
         Event nextEvent = peek_from_list( get_lane_queue( IS_4, dir, laneID ) );
-  
-        // Don't enter if permitted left turn and there is traffic in opposite direction
-		if( ! ( get_route( V ) == LEFT && IS_4_left_turn( dir ) ) == 0 &&
-		    ! ( dir == EAST && get_route( V ) == RIGHT && IS_4_east_right_turn() == 0 ) ) {
+		Vehicle nextVehicle = get_object( nextEvent );
+        // Don't schedule next event if traffic doesn't allow it
+		if( ! ( get_route( nextVehicle ) == LEFT && IS_4_left_turn( dir ) == 0 ) &&
+		    ! ( dir == EAST && get_route( nextVehicle ) == RIGHT && IS_4_east_right_turn() == 0 ) ) {
             if( !(get_scheduled( nextEvent )) ) {
                 set_timestamp( nextEvent, get_sim_time() );
                 schedule_event( nextEvent );
@@ -242,7 +238,7 @@ static void IS_4_departure( void* P ) {
 			schedule_event( entering );
 		}
 		if( IS_4_left_turn( EAST ) || IS_4_east_right_turn() ) {
-			Event entering = peek_from_list( get_lane_queue( IS_4, NORTH, 1 ) );
+			Event entering = peek_from_list( get_lane_queue( IS_4, EAST, 1 ) );
 			set_timestamp( entering, get_sim_time() );
 			schedule_event( entering );
 		}

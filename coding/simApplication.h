@@ -13,7 +13,7 @@
 #include "simEngine.h"
 
 // Print events to stdout
-#define VERBOSE 1
+#define VERBOSE 0
 
 /**
  * - Initializes a new simulation and its parameters

@@ -258,9 +258,10 @@ static void IS_3_crossing( void* P ) {
 	// Schedule entering event for following vehicle, if signal is still yellow/green
 	if( get_list_counter( get_lane_queue( IS_3, dir, laneID ) ) > 0 ) {
 		Event nextEvent = peek_from_list( get_lane_queue( IS_3, dir, laneID ) );
+		Vehicle nextVehicle = get_object( nextEvent );
 		if( get_light( IS_3, dir, laneID ) != RED ) {
 			// Don't enter if permitted left turn and there is traffic in opposite direction
-			if( ! ( get_route( V ) == LEFT && IS_3_left_turn( dir ) == 0 ) ) {
+			if( ! ( get_route( nextVehicle ) == LEFT && IS_3_left_turn( dir ) == 0 ) ) {
 				if( !(get_scheduled( nextEvent )) ) {
 					set_timestamp( nextEvent, get_sim_time() );
 					schedule_event( nextEvent );

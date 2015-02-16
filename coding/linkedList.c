@@ -65,8 +65,6 @@ int add_to_list( LinkedList L, ptr P ) {
 
 ptr peek_from_list( LinkedList L ) {
 	if( L == NULL ) { fprintf(stderr,"Warning from LL peek_from_list(): L is NULL\n"); return NULL; }
-	
-
 	return L->head->element;
 }
 

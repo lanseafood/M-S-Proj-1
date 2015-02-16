@@ -104,6 +104,10 @@ int set_route( Vehicle V, Route route ) {
 }
 
 Route get_route( Vehicle V ) {
+	if( V == NULL ) {
+		fprintf(stderr,"get_route(), V is NULL\n");
+		exit(1);
+	}
 	return V->route;
 }
 

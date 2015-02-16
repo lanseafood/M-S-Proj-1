@@ -297,9 +297,10 @@ static void IS_5_crossing( void* P ) {
 	// Schedule entering event for following vehicle, if signal is still yellow/green
 	if( get_list_counter( get_lane_queue( IS_5, dir, laneID ) ) > 0 ) {
 		Event nextEvent = peek_from_list( get_lane_queue( IS_5, dir, laneID ) );
+		Vehicle nextVehicle = get_object( nextEvent );
 		if( get_light( IS_5, dir, laneID ) != RED ) {
 			// Don't enter if permitted left turn and there is traffic in opposite direction
-			if( ! ( get_route( V ) == LEFT && IS_5_left_turn( dir ) == 0 ) ) {
+			if( ! ( get_route( nextVehicle ) == LEFT && IS_5_left_turn( dir ) == 0 ) ) {
 				if( !(get_scheduled( nextEvent )) ) {
 					set_timestamp( nextEvent, get_sim_time() );
 					schedule_event( nextEvent );
@@ -357,7 +358,6 @@ static void IS_5_departure( void* P ) {
 		// Increment section vehicle counter
 		change_south_vehicles( S_5, 1 );
 		set_dir( V, NORTH );
-		
 	} else {
 		set_event_type( E, GLOBAL_DEPARTURE );
 		set_callback  ( E, global_departure );

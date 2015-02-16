@@ -35,7 +35,7 @@ static int IS_2_choose_route_and_lane( Direction dir, int dest, Vehicle V ) {
 		case SOUTH:
 		{
 			if( dest == 203 ) { set_route( V, RIGHT ); set_departDir( V, EAST ); laneID = 2; }
-			else if( dest == 203 ) { set_route( V, LEFT ); set_departDir( V, WEST ); laneID = 1; }
+			else if( dest == 222 ) { set_route( V, LEFT ); set_departDir( V, WEST ); laneID = 1; }
 			else { set_route( V, STRAIGHT ); set_departDir( V, NORTH ); laneID =
 				( get_list_counter( get_lane_queue( IS_2, SOUTH, 1 ) ) <
 				 get_list_counter( get_lane_queue( IS_2, SOUTH, 2 ) ) ) ? 1 : 2; }
@@ -258,9 +258,10 @@ static void IS_2_crossing( void* P ) {
 	// Schedule entering event for following vehicle, if signal is still yellow/green
 	if( get_list_counter( get_lane_queue( IS_2, dir, laneID ) ) > 0 ) {
 		Event nextEvent = peek_from_list( get_lane_queue( IS_2, dir, laneID ) );
+		Vehicle nextVehicle = get_object( nextEvent );
 		if( get_light( IS_2, dir, laneID ) != RED ) {
 			// Don't enter if permitted left turn and there is traffic in opposite direction
-			if( ! ( get_route( V ) == LEFT && IS_2_left_turn( dir ) == 0 ) ) {
+			if( ! ( get_route( nextVehicle ) == LEFT && IS_2_left_turn( dir ) == 0 ) ) {
 				if( !(get_scheduled( nextEvent )) ) {
 					set_timestamp( nextEvent, get_sim_time() );
 					schedule_event( nextEvent );

@@ -53,24 +53,23 @@ static int destinations[11] =
 
 // Origin and destination probabilities
 static double p_origins[11] =
-//-101- -102- -103- -106- -112- -113- -114- -115- -121- -122- -123-
-{ 0.20, 0.10, 0.10, 0.20, 0.00, 0.00, 0.00, 0.00, 0.20, 0.10, 0.10 };
+//  -101-   -102-   -103-   -106-   -112-   -113-   -114-   -115-   -121-   -122-   -123-
+{ 0.1874, 0.0495, 0.0135, 0.0000, 0.0195, 0.0036, 0.3793, 0.1559, 0.0150, 0.0735, 0.0705 };
 static double p_destinations[11][11] =
 {
-//    -201- -202- -203- -206- -212- -213- -214- -215- -221- -222- -223-
-	{ 0.00, 0.20, 0.20, 0.10, 0.00, 0.00, 0.20, 0.00, 0.10, 0.00, 0.20 }, // origin 101
-	{ 0.20, 0.00, 0.20, 0.10, 0.00, 0.00, 0.20, 0.00, 0.10, 0.00, 0.20 }, // origin 102
-	{ 0.20, 0.10, 0.00, 0.10, 0.00, 0.00, 0.20, 0.00, 0.10, 0.20, 0.10 }, // origin 103
-	{ 0.20, 0.10, 0.10, 0.00, 0.00, 0.00, 0.20, 0.00, 0.20, 0.10, 0.10 }, // origin 106
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 112
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 113
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 114
-	{ 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00 }, // origin 115
-	{ 0.20, 0.10, 0.10, 0.20, 0.00, 0.00, 0.20, 0.00, 0.00, 0.10, 0.10 }, // origin 121
-	{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.00, 0.20 }, // origin 122
-	{ 0.20, 0.20, 0.20, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.20, 0.00 }  // origin 123
+//     -201-   -202-   -203-   -206-   -212-   -213-   -214-   -215-   -221-   -222-   -223-
+	{ 0.0000, 0.0960, 0.0000, 0.0160, 0.0080, 0.0160, 0.5360, 0.0640, 0.0400, 0.0240, 0.2000 }, // origin 101
+	{ 0.2424, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.5455, 0.0909, 0.0303, 0.0303, 0.0303 }, // origin 102
+	{ 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.1111, 0.0000, 0.0000, 0.7778, 0.1111 }, // origin 103
+	{ 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000 }, // origin 106
+	{ 0.0769, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.6923, 0.1538, 0.0769, 0.0000, 0.0000 }, // origin 112
+	{ 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000, 0.0000, 0.0000, 0.0000, 0.0000 }, // origin 113
+	{ 0.2885, 0.0672, 0.0040, 0.0237, 0.0949, 0.2846, 0.0000, 0.1700, 0.0119, 0.0119, 0.0435 }, // origin 114
+	{ 0.2692, 0.0385, 0.0192, 0.0192, 0.0577, 0.0096, 0.4423, 0.0000, 0.0288, 0.0288, 0.0865 }, // origin 115
+	{ 0.2000, 0.3000, 0.1000, 0.0000, 0.0000, 0.0000, 0.2000, 0.0000, 0.0000, 0.1000, 0.1000 }, // origin 121
+	{ 0.2653, 0.4490, 0.0816, 0.0000, 0.0000, 0.0000, 0.0204, 0.0204, 0.0000, 0.0000, 0.1633 }, // origin 122
+	{ 0.4894, 0.0000, 0.0426, 0.0000, 0.0000, 0.0213, 0.3617, 0.0426, 0.0000, 0.0426, 0.0000 }  // origin 123
 };
-
 /*
 --------------------------------------------------------------------------------------
 =================================== NGSIM DATA SET ===================================
@@ -85,7 +84,7 @@ Average Inter-Arrival Time: 0.83 sec (assuming all vehicles entered during the 1
 Average Vehicle Length    : 16.3 ft
 static double p_origins[11] =
 //  -101-   -102-   -103-   -106-   -112-   -113-   -114-   -115-   -121-   -122-   -123-
-{ 0.1874, 0.0495, 0.0135, 0,0000, 0.0195, 0.0036, 0.3793, 0.1559, 0.0150, 0.0735, 0.0705 };
+{ 0.1874, 0.0495, 0.0135, 0.0000, 0.0195, 0.0036, 0.3793, 0.1559, 0.0150, 0.0735, 0.0705 };
 static double p_destinations[11][11] =
 {
 //     -201-   -202-   -203-   -206-   -212-   -213-   -214-   -215-   -221-   -222-   -223-
@@ -175,17 +174,20 @@ static void IS_5_entering ( void* P );
 static void IS_5_crossing ( void* P );
 static void IS_5_departure( void* P );
 
-/*
-static void (*IS_ENTER[5])(void *) = {
-	IS_1_entering, IS_2_entering, IS_3_entering, IS_4_entering, IS_5_entering
-};
-
-static TypeOfEvent IS_ENTER_EVENTS[5] = {
-	IS_1_ENTERING, IS_2_ENTERING, IS_3_ENTERING, IS_4_ENTERING, IS_5_ENTERING
-};*/
-
 /* --------------------------------------------------------------------------------------- */
 /* ======================================================================================= */
+
+void print_queues( Intersection I ) {
+	
+	int *numLanes = get_numLanes( I );
+	LinkedList **laneQueues = get_laneQueues( I );
+	
+	for( int i = 0; i < 4; i++ ) {
+		for( int j = 0; j < numLanes[i]; j++ ) {
+			printf("DIR=%d, Lane=%d, Counter: %d\n" , i, j+1, get_list_counter( laneQueues[i][j] ));
+		}
+	}
+}
 
 void create_sim( double simEnd ) {
 	
@@ -249,6 +251,17 @@ void create_sim( double simEnd ) {
 	printf( "Average Travel Time: %6.2f sec\n", totalTravelTime/departures );
 	printf( "Average Wait   Time: %6.2f sec\n", totalWaitTime/departures );
 	printf( "---------------------------------------------------------\n");
+	
+	printf("\nIS1:\n");
+	print_queues( IS_1 );
+	printf("\nIS2:\n");
+	print_queues( IS_2 );
+	printf("\nIS3:\n");
+	print_queues( IS_3 );
+	printf("\nIS4:\n");
+	print_queues( IS_4 );
+	printf("\nIS5:\n");
+	print_queues( IS_5 );
 }
 
 // Initialize new event (without scheduling it)
@@ -513,6 +526,7 @@ static void IS_signal( void* P ) {
 	int ID = get_inter_zoneID( I );
 	if( I == NULL ) { fprintf(stderr,"Error from IS_signal(): I is NULL\n"); exit(1); }
 	#if VERBOSE == 1
+		if( ID == 5 )
 		printf( "%7.2f, Intersection %d Signal Event; ", get_sim_time(), ID );
 	#endif
 	
@@ -528,8 +542,8 @@ static void IS_signal( void* P ) {
 	set_next_phase(I);
 	int currPhase = get_currPhase( I );
 	#if VERBOSE == 1
-		printf("old phase: %2d, new phase: %2d, phaseLength: %5.2f\n",
-		   oldPhase, currPhase, phaseLengths[currPhase]);
+	if( ID == 5 ) printf("old phase: %2d, new phase: %2d, phaseLength: %5.2f\n",
+						 oldPhase, currPhase, phaseLengths[currPhase]);
 	#endif
 	// Schedule next signal event
 	set_timestamp( E, get_sim_time() + phaseLengths[currPhase] );
@@ -539,7 +553,7 @@ static void IS_signal( void* P ) {
 	for( int i = 0; i < 4; i++ ) {
 		for( int j = 0; j < numLanes[i]; j++ ) {
 			if( signalStatus[i][j][currPhase] == GREEN && signalStatus[i][j][oldPhase] == RED ) {
-				if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j ) == 0 ) {
+				if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j+1 ) == 0 ) {
 					Event newEvent = peek_from_list( laneQueues[i][j] );
 					if( !(get_scheduled( newEvent )) ) {
 						set_timestamp( newEvent, get_sim_time() + SUD );

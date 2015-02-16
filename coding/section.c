@@ -65,7 +65,7 @@ int change_north_vehicles(Section S, int val){
 	if( !(S->n_vehicles < S->n_capacity) ) {
 		if( !S->n_congestion_flag ) {
 			S->n_congestion_flag = 1;
-			#if VERBOSE == 1
+			#if VERBOSE == 0
 				printf("%7.2f, Congestion in Section %d in north direction\n", get_sim_time(), S->zoneID );
 			#endif
 		}
@@ -73,10 +73,10 @@ int change_north_vehicles(Section S, int val){
 	else {
 		if( S->n_congestion_flag ) {
 			S->n_congestion_flag = 0;
-			#if VERBOSE == 1
+			#if VERBOSE == 0
 				printf("%7.2f, Section %d clear in north direction\n", get_sim_time(), S->zoneID );
 			#endif
-			section_clear( S->zoneID, NORTH );
+			section_clear( S->zoneID-1, NORTH );
 		}
 	}
 	return 0;
@@ -87,7 +87,7 @@ int change_south_vehicles(Section S, int val){
 	if( !(S->s_vehicles < S->s_capacity) ) {
 		if( !S->s_congestion_flag ) {
 			S->s_congestion_flag = 1;
-			#if VERBOSE == 1
+			#if VERBOSE == 0
 				printf("%7.2f, Congestion in Section %d in south direction\n", get_sim_time(), S->zoneID );
 			#endif
 		}
@@ -95,7 +95,7 @@ int change_south_vehicles(Section S, int val){
 	else {
 		if( S->s_congestion_flag ) {
 			S->s_congestion_flag = 0;
-			#if VERBOSE == 1
+			#if VERBOSE == 0
 				printf("%7.2f, Section %d clear in south direction\n", get_sim_time(), S->zoneID );
 			#endif
 			section_clear( S->zoneID, SOUTH );
