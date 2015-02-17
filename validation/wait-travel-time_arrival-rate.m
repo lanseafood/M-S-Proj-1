@@ -3,14 +3,12 @@
 
 # Set title and axes
 set title 'Average travel and waiting time: dependency on arrival rate'
-set xrange[0 : 3.6]
-set yrange[0 : 400]
-set xtics(0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5) nomirror
-set ytics(0, 50, 100, 150, 200, 250, 300, 350, 400)
+set xrange[0 : 3.1]
+set yrange[0 : 700]
+set xtics(0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0) nomirror
+set ytics(0, 100, 200, 300, 400, 500, 600, 700)
 set xlabel 'Arrival rate'
 set ylabel 'Average travel/waiting time in seconds'
-
-#set logscale y
 
 set key left
 
@@ -31,7 +29,6 @@ unset xtics
 unset ytics
 unset xlabel
 unset ylabel
-#unset logscale y
 unset key
 unset grid
 unset style

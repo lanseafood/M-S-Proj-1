@@ -10,8 +10,6 @@ set ytics(0, 10000, 20000, 30000, 40000, 50000, 60000, 70000)
 set xlabel 'Arrival rate'
 set ylabel 'Number of vehicle arrivals/departures'
 
-#set logscale y
-
 set key left
 
 # Set plot styles
@@ -31,7 +29,6 @@ unset xtics
 unset ytics
 unset xlabel
 unset ylabel
-#unset logscale y
 unset key
 unset grid
 unset style
