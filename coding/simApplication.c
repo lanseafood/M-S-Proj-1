@@ -16,13 +16,15 @@
 #include "section.h"
 #include "simApplication.h"
 
-#define IAT  5.0f    // Global Inter Arrival Time (mean value for exponential distribution)
+//#define RATE 0.5f
+//#define IAT ( 1.0f / RATE )
+#define IAT  0.83f   // Global Inter Arrival Time (mean value for exponential distribution)
 #define VEL 51.0f    // Maximum Vehicle Speed in ft/sec (35mph ~ 51ft/sec)
 #define ACC 10.0f    // Vehicle Acceleration in ft/sec^2
-#define VHL 15.0f    // Vehicle length
+#define VHL 16.3f    // Vehicle length
 #define SDD 30.0f    // Safety Distance in ft while driving
 #define SDQ  5.0f    // Safety Distance in ft while queueing up
-#define SUD  1.0f    // Start-up delay / lost time (first car: delay when traffic light switches to green)
+#define SUD  1.5f    // Start-up delay / lost time (first car: delay when traffic light switches to green)
 
 #define SDT ( ( SDD + VHL ) / VEL ) // Safety Distance in sec while driving with max. velocity
 
@@ -252,6 +254,25 @@ void create_sim( double simEnd ) {
 	printf( "Average Wait   Time: %6.2f sec\n", totalWaitTime/departures );
 	printf( "---------------------------------------------------------\n");
 	
+	/*
+	FILE *out1 = fopen( "travel-time.txt", "a" );
+	FILE *out2 = fopen( "wait-time.txt", "a" );
+	if ( out1 == NULL || out2 == NULL ) { fprintf (stderr, "Error for write\n"); exit(1); }
+	fprintf( out1, "%.2f\n", totalTravelTime/departures );
+	fprintf( out2, "%.2f\n", totalWaitTime/departures );
+	if( fclose(out1) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
+	if( fclose(out2) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
+	*/
+	/*
+	FILE *out3 = fopen( "arrivals.txt", "a" );
+	FILE *out4 = fopen( "departures.txt", "a" );
+	if ( out3 == NULL || out4 == NULL ) { fprintf (stderr, "Error for write\n"); exit(1); }
+	fprintf( out3, "%d\n", arrivals );
+	fprintf( out4, "%d\n", departures );
+	if( fclose(out3) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
+	if( fclose(out4) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
+	*/
+	/*
 	printf("\nIS1:\n");
 	print_queues( IS_1 );
 	printf("\nIS2:\n");
@@ -262,6 +283,7 @@ void create_sim( double simEnd ) {
 	print_queues( IS_4 );
 	printf("\nIS5:\n");
 	print_queues( IS_5 );
+	*/
 }
 
 // Initialize new event (without scheduling it)
