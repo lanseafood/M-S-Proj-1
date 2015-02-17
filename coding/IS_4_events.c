@@ -35,7 +35,7 @@ static int IS_4_choose_route_and_lane( Direction dir, int dest, Vehicle V ) {
 				set_route( V, STRAIGHT ); set_departDir( V, NORTH );
 				laneID =
                    ( get_list_counter( get_lane_queue( IS_4, SOUTH, 3 ) ) <
-                     get_list_counter( get_lane_queue( IS_4, SOUTH, 2 ) ) ) ? 3 : 2;
+					get_list_counter( get_lane_queue( IS_4, SOUTH, 2 ) ) ) ? 3 : 2;
 				if( get_list_counter(get_lane_queue(IS_4, SOUTH, 1)) < get_list_counter(get_lane_queue(IS_4, SOUTH, laneID))) laneID = 1;
 			}
             break;
@@ -113,7 +113,7 @@ static void IS_4_arrival( void* P ) {
     
     set_event_type( E, IS_4_ENTERING );
     set_callback( E, IS_4_entering );
-    
+	
     int newLane = IS_4_choose_route_and_lane(dir, dest, V);
     
     set_laneID( V, newLane );
@@ -128,7 +128,7 @@ static void IS_4_arrival( void* P ) {
             schedule_event( E );
 		} else { set_velocity( V, 0.0 ); }
     }
-    else { set_velocity( V, 0.0 ); }
+	else { set_velocity( V, 0.0 ); }
     set_wait_time_buf( V, get_sim_time() );
 }
 
@@ -139,8 +139,7 @@ static void IS_4_entering( void* P ) {
     Vehicle V = get_object( E );
     Direction dir = get_dir( V );
     int laneID = get_laneID( V );
-    
-    //if( get_route( V ) == LEFT && IS_4_left_turn( dir ) == 0 ) { set_velocity( V, 0.0 ); return; }
+
     if( get_departDir( V ) == NORTH && get_congestion_flag( S_5, NORTH ) ) { set_velocity( V, 0.0 ); return; }
     if( get_departDir( V ) == SOUTH && get_congestion_flag( S_4, SOUTH ) ) { set_velocity( V, 0.0 ); return; }
     // Check if this event is first in the queue
@@ -166,7 +165,7 @@ static void IS_4_entering( void* P ) {
         // Decrement section vehicle counter
         if( dir == SOUTH ) change_north_vehicles( S_4, -1 );
         if( dir == NORTH ) change_south_vehicles( S_5, -1 );
-    }
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

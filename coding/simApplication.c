@@ -31,11 +31,16 @@
 // Define this preprocessor
 #define SYNC_SIGNAL 0
 
+// Write stats to output files
+#define OUTPUT_FILES 0
+
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
 // Pointer declaration: compare function for priority queue
 int (*compare_to)( void*, void* );
 
 // Intersections
-static Intersection IS_1, IS_2, IS_3, IS_4, IS_5;
+//static Intersection IS_1, IS_2, IS_3, IS_4, IS_5;
 Intersection IS_pointer[5];
 
 // Road sections between intersections (Peachtree St NE)
@@ -179,17 +184,17 @@ static void IS_5_departure( void* P );
 /* --------------------------------------------------------------------------------------- */
 /* ======================================================================================= */
 
+/*
 void print_queues( Intersection I ) {
-	
 	int *numLanes = get_numLanes( I );
 	LinkedList **laneQueues = get_laneQueues( I );
-	
 	for( int i = 0; i < 4; i++ ) {
 		for( int j = 0; j < numLanes[i]; j++ ) {
 			printf("DIR=%d, Lane=%d, Counter: %d\n" , i, j+1, get_list_counter( laneQueues[i][j] ));
 		}
 	}
 }
+*/
 
 void create_sim( double simEnd ) {
 	
@@ -254,7 +259,7 @@ void create_sim( double simEnd ) {
 	printf( "Average Wait   Time: %6.2f sec\n", totalWaitTime/departures );
 	printf( "---------------------------------------------------------\n");
 	
-	/*
+#if SYNC_SIGNAL == 1
 	FILE *out1 = fopen( "travel-time.txt", "a" );
 	FILE *out2 = fopen( "wait-time.txt", "a" );
 	if ( out1 == NULL || out2 == NULL ) { fprintf (stderr, "Error for write\n"); exit(1); }
@@ -262,8 +267,6 @@ void create_sim( double simEnd ) {
 	fprintf( out2, "%.2f\n", totalWaitTime/departures );
 	if( fclose(out1) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
 	if( fclose(out2) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
-	*/
-	/*
 	FILE *out3 = fopen( "arrivals.txt", "a" );
 	FILE *out4 = fopen( "departures.txt", "a" );
 	if ( out3 == NULL || out4 == NULL ) { fprintf (stderr, "Error for write\n"); exit(1); }
@@ -271,7 +274,7 @@ void create_sim( double simEnd ) {
 	fprintf( out4, "%d\n", departures );
 	if( fclose(out3) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
 	if( fclose(out4) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
-	*/
+#endif
 	/*
 	printf("\nIS1:\n");
 	print_queues( IS_1 );
@@ -419,11 +422,34 @@ static void rand_signal_init() {
 
 static void sync_signal_init() {
 	printf("Synchronized Signal Initialization\n");
-	printf( "  - Intersection 1\n" );
-	printf( "  - Intersection 2\n" );
-	printf( "  - Intersection 3\n" );
-	printf( "  - Intersection 5\n" );
-	exit(0);
+	// IS 1
+	int syncPhase = MIN( 4, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_1, syncPhase );
+	double nextSignalSwitch = MIN( 3.33, get_phaseLengths(IS_1)[syncPhase] );
+	printf( "  - Intersection 1; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_1 );
+	// IS 2
+	syncPhase = MIN( 0, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_2, syncPhase );
+	nextSignalSwitch = MIN( 5.49, get_phaseLengths(IS_2)[syncPhase] );
+	printf( "  - Intersection 2; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_2 );
+	// IS 3
+	syncPhase = MIN( 0, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_3, syncPhase );
+	nextSignalSwitch = MIN( 21.19, get_phaseLengths(IS_3)[syncPhase] );
+	printf( "  - Intersection 3; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_3 = init_event( nextSignalSwitch, IS_3, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_3 );
+	// IS 5
+	syncPhase = MIN( 6, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_5, syncPhase );
+	nextSignalSwitch = MIN( 3.44, get_phaseLengths(IS_5)[syncPhase] );
+	printf( "  - Intersection 5; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_5 = init_event( nextSignalSwitch, IS_5, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_5 );
 }
 
 /* ======================================================================================== *\
@@ -645,7 +671,7 @@ void section_clear( int ID, Direction D ) {
 		// Schedule only North/South for IS 4
 		for( int i = 0; i < 4; i+=2 ) {
 			for( int j = 0; j < numLanes[i]; j++ ) {
-				if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j ) == 0 ) {
+				if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j+1 ) == 0 ) {
 					Event newEvent = peek_from_list( laneQueues[i][j] );
 					Vehicle V = get_object( newEvent );
 					if( get_departDir( V ) == D ) {
@@ -664,7 +690,7 @@ void section_clear( int ID, Direction D ) {
 		for( int i = 0; i < 4; i++ ) {
 			for( int j = 0; j < numLanes[i]; j++ ) {
 				if( signalStatus[i][j][currPhase] != RED ) {
-					if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j ) == 0 ) {
+					if( get_list_counter( laneQueues[i][j] ) > 0 && get_lane_flag( I, i, j+1 ) == 0 ) {
 						Event newEvent = peek_from_list( laneQueues[i][j] );
 						Vehicle V = get_object( newEvent );
 						if( get_departDir( V ) == D ) {
