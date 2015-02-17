@@ -259,7 +259,7 @@ void create_sim( double simEnd ) {
 	printf( "Average Wait   Time: %6.2f sec\n", totalWaitTime/departures );
 	printf( "---------------------------------------------------------\n");
 	
-#if SYNC_SIGNAL == 1
+#if OUTPUT_FILES == 1
 	FILE *out1 = fopen( "travel-time.txt", "a" );
 	FILE *out2 = fopen( "wait-time.txt", "a" );
 	if ( out1 == NULL || out2 == NULL ) { fprintf (stderr, "Error for write\n"); exit(1); }
