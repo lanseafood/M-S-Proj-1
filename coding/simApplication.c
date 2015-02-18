@@ -16,8 +16,6 @@
 #include "section.h"
 #include "simApplication.h"
 
-//#define RATE 0.5f
-//#define IAT ( 1.0f / RATE )
 #define IAT  0.83f   // Global Inter Arrival Time (mean value for exponential distribution)
 #define VEL 51.0f    // Maximum Vehicle Speed in ft/sec (35mph ~ 51ft/sec)
 #define ACC 10.0f    // Vehicle Acceleration in ft/sec^2
@@ -40,7 +38,7 @@
 int (*compare_to)( void*, void* );
 
 // Intersections
-//static Intersection IS_1, IS_2, IS_3, IS_4, IS_5;
+static Intersection IS_1, IS_2, IS_3, IS_4, IS_5;
 Intersection IS_pointer[5];
 
 // Road sections between intersections (Peachtree St NE)
@@ -141,14 +139,19 @@ static Event init_event( double timestamp, void *object, TypeOfObject OT, TypeOf
 /* Auxiliary functions */
 static double urand();
 static double randexp();
+#if SYNC_SIGNAL == 0
 static int pick_signal_phase( Intersection I );
+#endif
 static int pick_origin();
 static int pick_destination( int origin );
 static void check_and_print_vehicle_event( Event E );
 
 /* Traffic signal initialization */
+#if SYNC_SIGNAL == 0
 static void rand_signal_init();
+#else
 static void sync_signal_init();
+#endif
 
 /* Event handler */
 static void global_arrival( void *P );
@@ -241,6 +244,7 @@ void create_sim( double simEnd ) {
 	int seed = (int)(t1.tv_usec * t1.tv_sec);
 	srand(seed);
 	*/
+	//srand(0);
 	
 	// Initialize and schedule first event (global arrival)
 	Event firstArrival = init_event( -1, NULL, VEHICLE, GLOBAL_ARRIVAL, global_arrival );
@@ -326,6 +330,7 @@ static double randexp() {
 	return -IAT*( log( 1.0 - urand() ) );
 }
 
+#if SYNC_SIGNAL == 0
 // Pick random traffic signal phase
 static int pick_signal_phase( Intersection I ) {
 	double r = urand() * get_totalPhaseLength( I );
@@ -337,6 +342,7 @@ static int pick_signal_phase( Intersection I ) {
 	}
 	return j;
 }
+#endif
 
 // Pick vehicle origin zone
 static int pick_origin() {
@@ -388,6 +394,7 @@ static void check_and_print_vehicle_event( Event E ) {
 |*                                                                                          *|
 \* ---------------------------------------------------------------------------------------- */
 
+#if SYNC_SIGNAL == 0
 static void rand_signal_init() {
 	printf("Random Signal Initialization\n");
 	// IS 1
@@ -419,38 +426,39 @@ static void rand_signal_init() {
 	Event Inter_5 = init_event( nextSignalSwitch, IS_5, INTERSECTION, IS_SIGNAL, IS_signal );
 	schedule_event( Inter_5 );
 }
-
+#else
 static void sync_signal_init() {
 	printf("Synchronized Signal Initialization\n");
 	// IS 1
-	int syncPhase = MIN( 4, get_maxPhase(IS_1)-1 );
+	int syncPhase = MIN( 9, get_maxPhase(IS_1)-1 );
 	set_currPhase( IS_1, syncPhase );
-	double nextSignalSwitch = MIN( 3.33, get_phaseLengths(IS_1)[syncPhase] );
+	double nextSignalSwitch = MIN( 16.4, get_phaseLengths(IS_1)[syncPhase] );
 	printf( "  - Intersection 1; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
 	Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_SIGNAL, IS_signal );
 	schedule_event( Inter_1 );
 	// IS 2
-	syncPhase = MIN( 0, get_maxPhase(IS_1)-1 );
+	syncPhase = MIN( 7, get_maxPhase(IS_1)-1 );
 	set_currPhase( IS_2, syncPhase );
-	nextSignalSwitch = MIN( 5.49, get_phaseLengths(IS_2)[syncPhase] );
+	nextSignalSwitch = MIN( 0.7, get_phaseLengths(IS_2)[syncPhase] );
 	printf( "  - Intersection 2; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
 	Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_SIGNAL, IS_signal );
 	schedule_event( Inter_2 );
 	// IS 3
 	syncPhase = MIN( 0, get_maxPhase(IS_1)-1 );
 	set_currPhase( IS_3, syncPhase );
-	nextSignalSwitch = MIN( 21.19, get_phaseLengths(IS_3)[syncPhase] );
+	nextSignalSwitch = MIN( 61.2, get_phaseLengths(IS_3)[syncPhase] );
 	printf( "  - Intersection 3; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
 	Event Inter_3 = init_event( nextSignalSwitch, IS_3, INTERSECTION, IS_SIGNAL, IS_signal );
 	schedule_event( Inter_3 );
 	// IS 5
-	syncPhase = MIN( 6, get_maxPhase(IS_1)-1 );
+	syncPhase = MIN( 3, get_maxPhase(IS_1)-1 );
 	set_currPhase( IS_5, syncPhase );
-	nextSignalSwitch = MIN( 3.44, get_phaseLengths(IS_5)[syncPhase] );
+	nextSignalSwitch = MIN( 34.6, get_phaseLengths(IS_5)[syncPhase] );
 	printf( "  - Intersection 5; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
 	Event Inter_5 = init_event( nextSignalSwitch, IS_5, INTERSECTION, IS_SIGNAL, IS_signal );
 	schedule_event( Inter_5 );
 }
+#endif
 
 /* ======================================================================================== *\
 |*                                                                                          *|
@@ -571,7 +579,6 @@ static void IS_signal( void* P ) {
 	Event E = (Event) P;
 	if( E == NULL ) { fprintf(stderr,"Error from IS_signal(): E is NULL\n"); exit(1); }
 	Intersection I = get_object( E );
-	int ID = get_inter_zoneID( I );
 	if( I == NULL ) { fprintf(stderr,"Error from IS_signal(): I is NULL\n"); exit(1); }
 	#if VERBOSE == 1
 		if( ID == 5 )
@@ -581,7 +588,6 @@ static void IS_signal( void* P ) {
 	// Get intersection fields
 	int ***signalStatus = get_signalStatus( I );
 	double *phaseLengths = get_phaseLengths( I );
-	int maxPhase = get_maxPhase( I );
 	int *numLanes = get_numLanes( I );
 	LinkedList **laneQueues = get_laneQueues( I );
 	
@@ -707,9 +713,3 @@ void section_clear( int ID, Direction D ) {
 }
 
 /* eof */
-
-
-
-
-
-

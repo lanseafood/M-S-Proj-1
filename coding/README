@@ -5,17 +5,6 @@
 # CSE 6730: Road Traffic Simulation
 
 # ============================================= #
-#               PROJECT CHECKPOINT              #
-# --------------------------------------------- #
-
-So far we have implemented all data structures and classes necessary for the final implementation (see "Modules"). This "checkpoint" submission includes a detailed simulation for Intersection 1 (cf. topology in the report), that is, instead of proceeding to Intersection 2, the vehicles will "depart globally" (leave the simulation) when leaving Intersection 1 northbound. For Intersection 1 all lanes have been implemented as well as the traffic signals and features such as red light right turns and two different phases for dedicated left turn signals (protected / permitted). Additionally, the traffic model includes acceleration, safety distances and further important "constants" (see input parameters). Traffic signal timings are implemented in "intersection.c" and initialized randomly (which represents the asynchronized case).
-
-Remaining steps for the implementation are:
-> Implementation of Intersections 2-5 event handlers
-> Congestion events
-> Traffic light synchronization
-
-# ============================================= #
 #                General Remarks                #
 # --------------------------------------------- #
 
@@ -37,9 +26,9 @@ Preprocessor directives (lines 19-25). For changed parameters to take effect the
 
 Line 30: SYNC_SIGNAL
 > Switch between synchronized and randomized traffic signal initialization
-> Enable (1) for synchronized initialization (not yet implemented)
+> Enable (1) for synchronized initialization
 
-Line 33: VERBOSE
+Line 16: VERBOSE (simApplication.h)
 > Enable (1) in order to print event information to stdout
 
 # ============================================= #

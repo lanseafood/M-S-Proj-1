@@ -15,8 +15,6 @@
 // Print events to stdout
 #define VERBOSE 0
 
-Intersection IS_1, IS_2, IS_3, IS_4, IS_5;
-
 /**
  * - Initializes a new simulation and its parameters
  * - Schedules the first event

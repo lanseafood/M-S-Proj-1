@@ -6,7 +6,7 @@
 
 # Compiler flags
 CC       = gcc
-CFLAGS   = -std=c99 -pedantic #-Wall #-Werror
+CFLAGS   = -std=c99 -pedantic -O3 -Wall -Werror
 OPTFLAGS = #-v
 LIBS     = -lm
 

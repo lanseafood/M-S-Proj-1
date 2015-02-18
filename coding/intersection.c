@@ -117,8 +117,6 @@ Intersection create_intersection(int zoneID) {
 		memcpy(I->signalStatus[ WEST][1],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
 		memcpy(I->signalStatus[ WEST][2],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
 		memcpy(I->signalStatus[ WEST][3],((int [12]){ R,  R,  R,   R,  R,  R,  R,  R,  R,   G,  Y,  R }),P*sizeof(int));
-		
-		
 	}
 	else if (zoneID==2) {
 		//                                               RIGHT STRAIGHT  LEFT

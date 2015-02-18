@@ -319,7 +319,6 @@ static void IS_1_departure( void* P ) {
 	if( departDir == NORTH ) {
 		set_event_type( E, IS_2_ARRIVAL );
 		set_callback  ( E, IS_2_arrival );
-		double leng = get_len( S_2 );
 		double timeToArrival = calc_time( get_velocity( V ), get_len( S_2 ) );
 		set_timestamp ( E, get_sim_time() + timeToArrival );
 		set_velocity( V, calc_velocity( get_velocity( V ), timeToArrival ) );

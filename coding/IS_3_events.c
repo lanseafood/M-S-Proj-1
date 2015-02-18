@@ -332,17 +332,3 @@ static void IS_3_departure( void* P ) {
 }
 
 /* eof */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
