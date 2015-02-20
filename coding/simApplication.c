@@ -27,7 +27,7 @@
 #define SDT ( ( SDD + VHL ) / VEL ) // Safety Distance in sec while driving with max. velocity
 
 // Define this preprocessor
-#define SYNC_SIGNAL 1
+#define SYNC_SIGNAL 0
 
 // Write stats to output files
 #define OUTPUT_FILES 0
@@ -428,64 +428,35 @@ static void rand_signal_init() {
 }
 #else
 static void sync_signal_init() {
-//	printf("Synchronized Signal Initialization\n");
-//	// IS 1
-//	int syncPhase = MIN( 9, get_maxPhase(IS_1)-1 );
-//	set_currPhase( IS_1, syncPhase );
-//	double nextSignalSwitch = MIN( 16.4, get_phaseLengths(IS_1)[syncPhase] );
-//	printf( "  - Intersection 1; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-//	Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_SIGNAL, IS_signal );
-//	schedule_event( Inter_1 );
-//	// IS 2
-//	syncPhase = MIN( 7, get_maxPhase(IS_1)-1 );
-//	set_currPhase( IS_2, syncPhase );
-//	nextSignalSwitch = MIN( 0.7, get_phaseLengths(IS_2)[syncPhase] );
-//	printf( "  - Intersection 2; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-//	Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_SIGNAL, IS_signal );
-//	schedule_event( Inter_2 );
-//	// IS 3
-//	syncPhase = MIN( 0, get_maxPhase(IS_1)-1 );
-//	set_currPhase( IS_3, syncPhase );
-//	nextSignalSwitch = MIN( 61.2, get_phaseLengths(IS_3)[syncPhase] );
-//	printf( "  - Intersection 3; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-//	Event Inter_3 = init_event( nextSignalSwitch, IS_3, INTERSECTION, IS_SIGNAL, IS_signal );
-//	schedule_event( Inter_3 );
-//	// IS 5
-//	syncPhase = MIN( 3, get_maxPhase(IS_1)-1 );
-//	set_currPhase( IS_5, syncPhase );
-//	nextSignalSwitch = MIN( 34.6, get_phaseLengths(IS_5)[syncPhase] );
-//	printf( "  - Intersection 5; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-//	Event Inter_5 = init_event( nextSignalSwitch, IS_5, INTERSECTION, IS_SIGNAL, IS_signal );
-//	schedule_event( Inter_5 );
-    printf("Synchronized Signal Initialization\n");
-    // IS 1
-    int syncPhase = MIN( 9, get_maxPhase(IS_1)-1 );
-    set_currPhase( IS_1, syncPhase );
-    double nextSignalSwitch = MIN( 5.0, get_phaseLengths(IS_1)[syncPhase] );
-    printf( "  - Intersection 1; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-    Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_SIGNAL, IS_signal );
-    schedule_event( Inter_1 );
-    // IS 2
-    syncPhase = MIN( 1, get_maxPhase(IS_1)-1 );
-    set_currPhase( IS_2, syncPhase );
-    nextSignalSwitch = MIN( 12.5, get_phaseLengths(IS_2)[syncPhase] );
-    printf( "  - Intersection 2; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-    Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_SIGNAL, IS_signal );
-    schedule_event( Inter_2 );
-    // IS 3
-    syncPhase = MIN( 1, get_maxPhase(IS_1)-1 );
-    set_currPhase( IS_3, syncPhase );
-    nextSignalSwitch = MIN( 3.2, get_phaseLengths(IS_3)[syncPhase] );
-    printf( "  - Intersection 3; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-    Event Inter_3 = init_event( nextSignalSwitch, IS_3, INTERSECTION, IS_SIGNAL, IS_signal );
-    schedule_event( Inter_3 );
-    // IS 5
-    syncPhase = MIN( 3, get_maxPhase(IS_1)-1 );
-    set_currPhase( IS_5, syncPhase );
-    nextSignalSwitch = MIN( 34.6, get_phaseLengths(IS_5)[syncPhase] );
-    printf( "  - Intersection 5; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
-    Event Inter_5 = init_event( nextSignalSwitch, IS_5, INTERSECTION, IS_SIGNAL, IS_signal );
-    schedule_event( Inter_5 );
+	printf("Synchronized Signal Initialization\n");
+	// IS 1
+	int syncPhase = MIN( 9, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_1, syncPhase );
+	double nextSignalSwitch = MIN( 5.0, get_phaseLengths(IS_1)[syncPhase] );
+	printf( "  - Intersection 1; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_1 = init_event( nextSignalSwitch, IS_1, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_1 );
+	// IS 2
+	syncPhase = MIN( 1, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_2, syncPhase );
+	nextSignalSwitch = MIN( 12.5, get_phaseLengths(IS_2)[syncPhase] );
+	printf( "  - Intersection 2; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_2 = init_event( nextSignalSwitch, IS_2, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_2 );
+	// IS 3
+	syncPhase = MIN( 1, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_3, syncPhase );
+	nextSignalSwitch = MIN( 3.2, get_phaseLengths(IS_3)[syncPhase] );
+	printf( "  - Intersection 3; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_3 = init_event( nextSignalSwitch, IS_3, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_3 );
+	// IS 5
+	syncPhase = MIN( 3, get_maxPhase(IS_1)-1 );
+	set_currPhase( IS_5, syncPhase );
+	nextSignalSwitch = MIN( 34.6, get_phaseLengths(IS_5)[syncPhase] );
+	printf( "  - Intersection 5; phase: %2d, next signal event: %5.2f\n", syncPhase, nextSignalSwitch );
+	Event Inter_5 = init_event( nextSignalSwitch, IS_5, INTERSECTION, IS_SIGNAL, IS_signal );
+	schedule_event( Inter_5 );
 }
 #endif
 
@@ -591,11 +562,6 @@ static void global_departure( void* P ) {
 	
 	// Change state variables
 	totalTravelTime += ( get_sim_time() - get_arrival_time( V ) );
-    FILE *out1 = fopen( "indiv_wait_time_synchro.txt", "a" );
-    if ( out1 == NULL) { fprintf (stderr, "Error for write\n"); exit(1); }
-    fprintf( out1, "%.2f\n", get_wait_time( V ));
-    if( fclose(out1) != 0 ) {fprintf(stderr,"Error\n"); exit(1);}
-    
 	totalWaitTime += get_wait_time( V );
 	departures++;
 	
@@ -615,8 +581,7 @@ static void IS_signal( void* P ) {
 	Intersection I = get_object( E );
 	if( I == NULL ) { fprintf(stderr,"Error from IS_signal(): I is NULL\n"); exit(1); }
 	#if VERBOSE == 1
-		if( ID == 5 )
-		printf( "%7.2f, Intersection %d Signal Event; ", get_sim_time(), ID );
+		printf( "%7.2f, Intersection %d Signal Event; ", get_sim_time(), get_inter_zoneID( I ) );
 	#endif
 	
 	// Get intersection fields
@@ -630,8 +595,8 @@ static void IS_signal( void* P ) {
 	set_next_phase(I);
 	int currPhase = get_currPhase( I );
 	#if VERBOSE == 1
-	if( ID == 5 ) printf("old phase: %2d, new phase: %2d, phaseLength: %5.2f\n",
-						 oldPhase, currPhase, phaseLengths[currPhase]);
+		printf("old phase: %2d, new phase: %2d, phaseLength: %5.2f\n",
+			   oldPhase, currPhase, phaseLengths[currPhase]);
 	#endif
 	// Schedule next signal event
 	set_timestamp( E, get_sim_time() + phaseLengths[currPhase] );

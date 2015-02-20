@@ -5,9 +5,11 @@
 //  Authors: Mingyue Ma, Eisha Nathan, Stefan Henneking
 //  01/12/2015
 //
+
 static int IS_4_choose_route_and_lane( Direction dir, int dest, Vehicle V );
 static int IS_4_east_right_turn();
 static int IS_4_left_turn( Direction D );
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Choose appropriate lane for vehicle
 static int IS_4_choose_route_and_lane( Direction dir, int dest, Vehicle V ) {

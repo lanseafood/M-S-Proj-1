@@ -43,9 +43,6 @@ struct IntersectionType {
 	double totalPhaseLength;
 	int maxPhase;
 	int currPhase;
-	
-	// Wait times
-	// .. //
 };
 
 // Allocate and initialize queues, lane flags and lane counter

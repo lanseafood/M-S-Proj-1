@@ -331,5 +331,4 @@ static void IS_2_departure( void* P ) {
 	schedule_event( E );
 }
 
-
 /* eof */

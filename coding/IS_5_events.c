@@ -6,7 +6,6 @@
 //  01/12/2015
 //
 
-
 static int IS_5_choose_route_and_lane( Direction dir, int dest, Vehicle V );
 static int IS_5_red_right_turn( Direction D );
 static int IS_5_left_turn( Direction D );
@@ -363,6 +362,5 @@ static void IS_5_departure( void* P ) {
 	}
 	schedule_event( E );
 }
-
 
 /* eof */
